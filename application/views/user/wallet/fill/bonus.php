@@ -54,7 +54,7 @@
                                                 <tr>
                                                     <td><?= date('Y/m/d H:i', $row_list->datecreate); ?></td>
                                                     <td>
-                                                        <span class="badge badge-secondary">sponsor</span> -
+                                                        <span class="badge badge-secondary">recommended</span> -
                                                         FIL income from <?= $row_list->username; ?>
                                                     </td>
                                                     <td><?= number_format($row_list->filecoin, 10); ?></td>
@@ -64,7 +64,7 @@
                                                 <tr>
                                                     <td><?= date('Y/m/d H:i', $row_list->datecreate); ?></td>
                                                     <td>
-                                                        <span class="badge badge-secondary">sponsor matching</span> -
+                                                        <span class="badge badge-secondary">recommended matching</span> -
                                                         FIL income from <?= $row_list->username; ?>
                                                     </td>
                                                     <td><?= number_format($row_list->filecoin, 10); ?></td>
@@ -84,7 +84,7 @@
                                                 <tr>
                                                     <td><?= date('Y/m/d H:i', $row_list->datecreate); ?></td>
                                                     <td>
-                                                        <span class="badge badge-secondary">mining generasi</span> -
+                                                        <span class="badge badge-secondary">mining matching</span> -
                                                         FIL income from <?= $row_list->generation; ?> <?= $row_list->username; ?>
                                                     </td>
                                                     <td><?= number_format($row_list->amount, 10); ?></td>

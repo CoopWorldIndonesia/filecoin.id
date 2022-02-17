@@ -891,7 +891,7 @@ class Admin extends CI_Controller
     public function packagePurchase()
     {
         $data['user']   = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
-        $data['title']  = 'Package Purchase';
+        $data['title']  = 'Bonus Global';
 
         $data['purchase'] = $this->M_user->get_purchase_admin()->result();
         $data['user_fm4'] = $this->M_user->get_user_level('FM4')->result();
@@ -923,7 +923,7 @@ class Admin extends CI_Controller
     public function detailMonth($year, $month)
     {
         $data['user']   = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
-        $data['title']  = 'Package Purchase';
+        $data['title']  = 'Bonus Global Detail';
 
         if ($month == 1) {
             $monthNow = 'January';
@@ -964,13 +964,31 @@ class Admin extends CI_Controller
         }
 
         if ($date == date('Y-m')) {
-            $data['fm4']  = $this->M_user->row_data_byuser('level_fm', 'fm', 'FM4');
-            $data['fm5']  = $this->M_user->row_data_byuser('level_fm', 'fm', 'FM5');
-            $data['fm6']  = $this->M_user->row_data_byuser('level_fm', 'fm', 'FM6');
-            $data['fm7']  = $this->M_user->row_data_byuser('level_fm', 'fm', 'FM7');
-            $data['fm8']  = $this->M_user->row_data_byuser('level_fm', 'fm', 'FM8');
-            $data['fm9']  = $this->M_user->row_data_byuser('level_fm', 'fm', 'FM9');
-            $data['fm10'] = $this->M_user->row_data_byuser('level_fm', 'fm', 'FM10');
+            $dateLimit = $date.'-15';
+
+            $query_fm4 = $this->M_user->count_fm_bymonth_now($dateLimit, 'FM4');
+            $query_fm5 = $this->M_user->count_fm_bymonth_now($dateLimit, 'FM5');
+            $query_fm6 = $this->M_user->count_fm_bymonth_now($dateLimit, 'FM6');
+            $query_fm7 = $this->M_user->count_fm_bymonth_now($dateLimit, 'FM7');
+            $query_fm8 = $this->M_user->count_fm_bymonth_now($dateLimit, 'FM8');
+            $query_fm9 = $this->M_user->count_fm_bymonth_now($dateLimit, 'FM9');
+            $query_fm10 = $this->M_user->count_fm_bymonth_now($dateLimit, 'FM10');
+
+            $amount_fm4 = $query_fm4+$query_fm5+$query_fm6+$query_fm7+$query_fm8+$query_fm9+$query_fm10;
+            $amount_fm5 = $query_fm5+$query_fm6+$query_fm7+$query_fm8+$query_fm9+$query_fm10;
+            $amount_fm6 = $query_fm6+$query_fm7+$query_fm8+$query_fm9+$query_fm10;
+            $amount_fm7 = $query_fm7+$query_fm8+$query_fm9+$query_fm10;
+            $amount_fm8 = $query_fm8+$query_fm9+$query_fm10;
+            $amount_fm9 = $query_fm9+$query_fm10;
+            $amount_fm10 = $query_fm10;
+
+            $data['fm4']  = $amount_fm4;
+            $data['fm5']  = $amount_fm5;
+            $data['fm6']  = $amount_fm6;
+            $data['fm7']  = $amount_fm7;
+            $data['fm8']  = $amount_fm8;
+            $data['fm9']  = $amount_fm9;
+            $data['fm10'] = $amount_fm10;
         } else {
             // $dateNew = new DateTime($date);
             // $dateNew->modify('1 month');
@@ -978,16 +996,22 @@ class Admin extends CI_Controller
 
             $fm4Global    = $this->M_user->get_level_month('FM4', $date)['total'];
             $fm4Excess    = $this->M_user->get_level_month2('FM4', $date)['total'];
+            
             $fm5Global    = $this->M_user->get_level_month('FM5', $date)['total'];
             $fm5Excess    = $this->M_user->get_level_month2('FM5', $date)['total'];
+            
             $fm6Global    = $this->M_user->get_level_month('FM6', $date)['total'];
             $fm6Excess    = $this->M_user->get_level_month2('FM6', $date)['total'];
+            
             $fm7Global    = $this->M_user->get_level_month('FM7', $date)['total'];
             $fm7Excess    = $this->M_user->get_level_month2('FM7', $date)['total'];
+            
             $fm8Global    = $this->M_user->get_level_month('FM8', $date)['total'];
             $fm8Excess    = $this->M_user->get_level_month2('FM8', $date)['total'];
+            
             $fm9Global    = $this->M_user->get_level_month('FM9', $date)['total'];
             $fm9Excess    = $this->M_user->get_level_month2('FM9', $date)['total'];
+            
             $fm10Global   = $this->M_user->get_level_month('FM10', $date)['total'];
             $fm10Excess   = $this->M_user->get_level_month2('FM10', $date)['total'];
 
@@ -1003,7 +1027,9 @@ class Admin extends CI_Controller
 
         $data['purchase']      = $this->M_user->get_purchase_admin()->result();
         $data['list_purchase'] = $this->M_user->get_listpurchase_admin($date)->result();
-        $data['month']         = $monthNow;
+        $data['monthName']     = $monthNow;
+        $data['date']          = $date;
+        $data['controller']    = $this;
 
         if ($this->session->userdata('email') && $this->session->userdata('role_id') == '1') {
             $this->load->view('templates/user_header', $data);
@@ -1014,6 +1040,69 @@ class Admin extends CI_Controller
         } else {
             redirect('auth');
         }
+    }
+    
+
+    /**Count total omset network position L */
+    public function countPositionL($userid)
+    {
+        $query = $this->M_user->check_line($userid, 'A');
+        $user_id = $query['user_id'] ?? null;
+        $user_position = $query['user_id'] ?? null;
+
+        $query_package = $this->M_user->get_point_byuserid($user_id)->row_array();
+        $package_poin = $query_package['point'] ?? null;
+
+        $countMember = $this->get_countPointL($user_position);
+
+        $sumTotal = array_sum($countMember) + $package_poin;
+        $this->arrPointL = array();
+
+        return $sumTotal;
+    }
+
+    public function get_countPointL($id)
+    {
+        $query = $this->M_user->get_totalpoin_byposition($id);
+
+        foreach ($query->result() as $row) {
+            array_push($this->arrPointL, $row->point);
+
+            $this->get_countPointL($row->user_id);
+        }
+
+        return $this->arrPointL;
+    }
+
+    /**Count total omset network position R */
+    public function countPositionR($userid)
+    {
+        $query = $this->M_user->check_line($userid, 'B');
+        $user_id = $query['user_id'] ?? null;
+        $user_position = $query['user_id'] ?? null;
+
+        $query_package = $this->M_user->get_point_byuserid($user_id)->row_array();
+        $package_poin = $query_package['point'] ?? null;
+
+        $countMember = $this->get_countPointR($user_position);
+
+        $sumTotal = array_sum($countMember) + $package_poin;
+        $this->arrPointR = array();
+
+        return $sumTotal;
+    }
+
+    public function get_countPointR($id)
+    {
+        $query = $this->M_user->get_totalpoin_byposition($id);
+
+        foreach ($query->result() as $row) {
+            array_push($this->arrPointR, $row->point);
+
+            $this->get_countPointR($row->user_id);
+        }
+
+        return $this->arrPointR;
     }
 
     /**Show Basecamp page */
@@ -1110,69 +1199,7 @@ class Admin extends CI_Controller
             }
         }
     }
-
-    /**Count total omset network position L */
-    public function countPositionL($userid)
-    {
-        $query = $this->M_user->check_line($userid, 'A');
-        $user_id = $query['user_id'] ?? null;
-        $user_position = $query['user_id'] ?? null;
-
-        $query_package = $this->M_user->get_point_byuserid($user_id)->row_array();
-        $package_poin = $query_package['point'] ?? null;
-
-        $countMember = $this->get_countPointL($user_position);
-
-        $sumTotal = array_sum($countMember) + $package_poin;
-        $this->arrPointL = array();
-
-        return $sumTotal;
-    }
-
-    public function get_countPointL($id)
-    {
-        $query = $this->M_user->get_totalpoin_byposition($id);
-
-        foreach ($query->result() as $row) {
-            array_push($this->arrPointL, $row->point);
-
-            $this->get_countPointL($row->user_id);
-        }
-
-        return $this->arrPointL;
-    }
-
-    /**Count total omset network position R */
-    public function countPositionR($userid)
-    {
-        $query = $this->M_user->check_line($userid, 'B');
-        $user_id = $query['user_id'] ?? null;
-        $user_position = $query['user_id'] ?? null;
-
-        $query_package = $this->M_user->get_point_byuserid($user_id)->row_array();
-        $package_poin = $query_package['point'] ?? null;
-
-        $countMember = $this->get_countPointR($user_position);
-
-        $sumTotal = array_sum($countMember) + $package_poin;
-        $this->arrPointR = array();
-
-        return $sumTotal;
-    }
-
-    public function get_countPointR($id)
-    {
-        $query = $this->M_user->get_totalpoin_byposition($id);
-
-        foreach ($query->result() as $row) {
-            array_push($this->arrPointR, $row->point);
-
-            $this->get_countPointR($row->user_id);
-        }
-
-        return $this->arrPointR;
-    }
-
+    
     public function confirmBasecamp()
     {
         if ($this->session->userdata('email') && $this->session->userdata('role_id') == '1') 
@@ -1244,6 +1271,76 @@ class Admin extends CI_Controller
                 redirect('admin/basecamp');
             }
         }
+    }
+    
+    public function detailLevelPerMonth()
+    {
+        $data['user']   = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
+        $data['title']  = 'Detail Level Per Month';
+
+        if ($this->session->userdata('email') && $this->session->userdata('role_id') == '1') 
+        {
+            $level = $this->uri->segment(3);
+            $date = $this->uri->segment(4);
+    
+            $dateNow = date('Y-m');
+    
+            if($date == $dateNow)
+            {
+                $dateLimit = $dateNow.'-15';
+
+                if($level == 'FM4')
+                {
+                    $level_array = array('FM4', 'FM5', 'FM6', 'FM7', 'FM8', 'FM9', 'FM10');
+                }
+                elseif($level == 'FM5')
+                {
+                    $level_array = array('FM5', 'FM6', 'FM7', 'FM8', 'FM9', 'FM10');
+                }
+                elseif($level == 'FM6')
+                {
+                    $level_array = array('FM6', 'FM7', 'FM8', 'FM9', 'FM10');
+                }
+                elseif($level == 'FM7')
+                {
+                    $level_array = array('FM7', 'FM8', 'FM9', 'FM10');
+                }
+                elseif($level == 'FM8')
+                {
+                    $level_array = array('FM8', 'FM9', 'FM10');
+                }
+                elseif($level == 'FM9')
+                {
+                    $level_array = array('FM9', 'FM10');
+                }
+                elseif($level == 'FM10')
+                {
+                    $level_array = array('FM10');
+                }
+
+                $query_detail = $this->M_user->get_level_byfm_monthnow($dateLimit, $level_array);
+                
+                $data['detail'] = $query_detail;
+                $data['excess'] = '';
+            }
+            else
+            {
+                $query_detail = $this->M_user->get_global_fm_bymonth($date, $level);
+                $query_excess = $this->M_user->get_excessglobal_fm_bymonth($date, $level);
+                $data['detail'] = $query_detail;
+                $data['excess'] = $query_excess;
+    
+            }
+            
+            $this->load->view('templates/user_header', $data);
+            $this->load->view('templates/admin_sidebar', $data);
+            $this->load->view('templates/user_topbar', $data);
+            $this->load->view('admin/detail_level_bymonth', $data);
+            $this->load->view('templates/user_footer');
+        } else {
+            redirect('auth');
+        }
+
     }
 
     public function cancelBasecamp()
@@ -1546,7 +1643,7 @@ class Admin extends CI_Controller
                     'type' => '6',
                     'title' => 'Withdrawal',
                     'message' => $this->input->post('note', true),
-                    'link' => $link,
+                    'link' => $link . '/' . $id,
                     'datecreate' => time()
                 ];
 
@@ -2800,10 +2897,10 @@ class Admin extends CI_Controller
 
     private function _loopingNetwork($firstLoop, $endLoop, $user_id)
     {
-        // if($firstLoop > $endLoop)
-        // {
-        //     return false;
-        // }
+        if($firstLoop > $endLoop)
+        {
+            return false;
+        }
 
         $query_position = $this->M_user->get_network_byposition($user_id);
 
@@ -2812,12 +2909,11 @@ class Admin extends CI_Controller
         if (count($query_position) != '') {
             $output .= '<ul>';
 
-            foreach ($query_position as $row_position) {
+            foreach ($query_position as $row_position) 
+            {
                 $countLeft      = $this->countPositionL($row_position->user_id);
                 $countRight     = $this->countPositionR($row_position->user_id);
                 $balancePoint   = $this->balance_point($row_position->user_id);
-                // $increaseLeft   = $this->countPositionL($row_position->user_id) - $this->increasePoint($row_position->user_id, 'L');
-                // $increaseRight  = $this->countPositionR($row_position->user_id) - $this->increasePoint($row_position->user_id, 'R');
                 $pointTodayL    = $this->countPointTodayL($row_position->user_id);
                 $pointTodayR    = $this->countPointTodayR($row_position->user_id);
                 $idLeft         = $this->countIDL($row_position->user_id);
@@ -2825,44 +2921,70 @@ class Admin extends CI_Controller
                 $query_box      = $this->M_user->sumPackage($row_position->user_id);
                 $package_name   = $query_box['point'] ?? null;
                 $package_color  = $this->_color_network($package_name);
-
+    
                 if ($balancePoint) {
-                    // $balance_a = $balancePoint['amount_left'] + $increaseLeft;
-                    // $balance_b = $balancePoint['amount_right'] + $increaseRight;
                     $balance_a = $balancePoint['balance_a'] + $pointTodayL;
                     $balance_b = $balancePoint['balance_b'] + $pointTodayR;
                 } else {
-                    $balance_a = $pointTodayL;
-                    $balance_b = $pointTodayR;
+                    $balance_a = $pointTodayL+$countLeft;
+                    $balance_b = $pointTodayR+$countRight;
                 }
-
+    
                 $output .=    '<li>';
-
-                $output .=      '<a href="' . base_url('admin/network/') . $row_position->user_id . '">
-                                    <div class="item" style="border:7px solid ' . $package_color . '">
-                                        <img class="flag-network" src="' . base_url('assets/img/') . $this->flag($row_position->country_code) . '" alt="#" width="40px">
-                                        <h1 class="text-uppercase name-network">' . strtolower($row_position->username) . '</h1>
-                                        <p>' . $row_position->fm . '</p>
-                                        <div class="d-flex justify-content-center align-content-center align-items-center position-relative">
-                                            <div class="text-right">
-                                                <p>(' . $idLeft . ' ID) left</p>
-                                                <p style="color:' . $package_color . '">' . $balance_a . '&nbsp;(' . $countLeft . ')</p>
-                                                <p>Increase</p>
-                                                <p style="color:' . $package_color . '">+ ' . $pointTodayL . '</p>
-                                            </div>
-                                            <div class="line"></div>
-                                            <div class="text-left">
-                                                <p>right (' . $idRight . ' ID)</p>
-                                                <p style="color:' . $package_color . '">' . $balance_b . '&nbsp;(' . $countRight . ')</p>
-                                                <p>Increase</p>
-                                                <p style="color:' . $package_color . '">+ ' . $pointTodayR . '</p>
-                                            </div>
+                $output .=      '<div class="item" style="border:7px solid ' . $package_color . '">
+                                    <img class="flag-network" src="' . base_url('assets/img/') . $this->flag($row_position->country_code) . '" alt="#" width="40px">
+                                    <h1 class="text-uppercase name-network" id="'.strtolower($row_position->username).'">' . strtolower($row_position->username) . '</h1>
+                                    <p>' . $row_position->fm . '</p>
+                                    <div class="d-flex justify-content-center align-content-center align-items-center position-relative">
+                                        <div class="text-right">
+                                            <p>(' . $idLeft . ' ID) left</p>
+                                            <p style="color:' . $package_color . '">' . $balance_a . '&nbsp;(' . $countLeft . ')</p>
+                                            <p>Increase</p>
+                                            <p style="color:' . $package_color . '">+ ' . $pointTodayL . '</p>
                                         </div>
-                                        <p class="box-network text-white" style="background-color:' . $package_color . '">' . $package_name . ' BOX</p>
-                                    </div>
-                                </a>';
+                                        <div class="line"></div>
+                                        <div class="text-left">
+                                            <p>right (' . $idRight . ' ID)</p>
+                                            <p style="color:' . $package_color . '">' . $balance_b . '&nbsp;(' . $countRight . ')</p>
+                                            <p>Increase</p>
+                                            <p style="color:' . $package_color . '">+ ' . $pointTodayR . '</p>
+                                        </div>
+                                    </div>';
+
+                $query_position_bottom = $this->M_user->get_network_byposition($row_position->user_id);
+
+                if(count($query_position_bottom) != '')
+                {
+                    $output .=      '<p class="box-network text-white" style="background-color:' . $package_color . '">' . $package_name . ' BOX</p>
+                                        <button id="'.$row_position->user_id.'" onClick="reply_click_net(this.id)" class="charetnet">
+                                            <i class="fas fa-caret-down"></i>
+                                        </button>
+                                    </div>';
+                }
+                else
+                {
+                    
+                    $output .=      '<p class="box-network text-white" style="background-color:' . $package_color . '">' . $package_name . ' BOX</p>
+                                        <button id="'.$row_position->user_id.'" onClick="reply_click_net(this.id)" class="charetnet">
+                                            <i class="fas fa-caret-down"></i>
+                                        </button>
+                                    </div>';
+                }
+                   
+                
+                if($firstLoop == $endLoop)
+                {
+                    $output .= '<div id="result'.$row_position->user_id.'" class="hideNetwork">';
+                }
+                else
+                {
+                    $output .= '<div id="result'.$row_position->user_id.'" class="displayNetwork">';
+                }
+                
                 //looping
                 $output .= $this->_loopingNetwork($firstLoop + 1, $endLoop, $row_position->user_id);
+                
+                $output .= '</div>';
 
                 $output .=      '</li>';
             }
@@ -2877,6 +2999,16 @@ class Admin extends CI_Controller
     {
         $id             = $this->input->post('user');
         $query_position = $this->M_user->get_network_byposition($id);
+        $level          = $this->input->post('level');
+
+        if(empty($level))
+        {
+            $endLoop = 0;
+        }
+        else
+        {
+            $endLoop        = $level -1;
+        }
 
         $output         = '';
 
@@ -2924,14 +3056,38 @@ class Admin extends CI_Controller
                                             <p>Increase</p>
                                             <p style="color:' . $package_color . '">+ ' . $pointTodayR . '</p>
                                         </div>
-                                    </div>
-                                    <p class="box-network text-white" style="background-color:' . $package_color . '">' . $package_name . ' BOX</p>
-                                    <button id="'.$row_position->user_id.'" onClick="reply_click(this.id)" class="charetnet">
-                                        <i class="fas fa-caret-down"></i>
-                                    </button>
-                                </div>';
+                                    </div>';
                     
-                    $output .= '<div id="result'.$row_position->user_id.'" class="hideNetwork"></div>';
+                    $query_position_bottom = $this->M_user->get_network_byposition($row_position->user_id);
+
+                    if(count($query_position_bottom) != '')
+                    {
+                        $output .= '<p class="box-network text-white" style="background-color:' . $package_color . '">' . $package_name . ' BOX</p>
+                                            <button id="'.$row_position->user_id.'" onClick="reply_click(this.id)" class="charetnet">
+                                                <i class="fas fa-caret-up"></i>
+                                            </button>
+                                        </div>';
+                            
+                        $output .= '<div id="result'.$row_position->user_id.'" class="displayNetwork">';
+                        
+                        $output .= $this->_loopingNetwork(1, $endLoop, $row_position->user_id);
+                        
+                        $output .= '</div>';
+                    }
+                    else
+                    {
+                        $output .= '<p class="box-network text-white" style="background-color:' . $package_color . '">' . $package_name . ' BOX</p>
+                                            <button id="'.$row_position->user_id.'" onClick="reply_click(this.id)" class="charetnet">
+                                                <i class="fas fa-caret-down"></i>
+                                            </button>
+                                        </div>';
+                            
+                        $output .= '<div id="result'.$row_position->user_id.'" class="hideNetwork">';
+                        
+                        $output .= $this->_loopingNetwork(1, $endLoop, $row_position->user_id);
+                        
+                        $output .= '</div>';
+                    }
     
                 $output .=    '</li>';
                 
@@ -2986,13 +3142,18 @@ class Admin extends CI_Controller
         echo $output;
     }
     
-     public function allNetwork()
+    
+    
+    public function allNetwork()
     {
         $data['title']      = 'All Network';
         $data['user']       = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
 
-        $query_user         = $this->M_user->get_user_toplevel();
+        $query_user         = $this->M_user->get_user_toplevel();   
+        $limitLevel         = $this->_countLimitLevel(0, $query_user['id']);
+
         $data['network']    = $this->_showAllNetwork($query_user['id'], $query_user['country_code'], $query_user['username']);
+        $data['limitLevel'] = $limitLevel;
 
         if ($this->session->userdata('email') && $this->session->userdata('role_id') == '1') {
             $this->load->view('templates/user_header', $data);
@@ -3066,6 +3227,24 @@ class Admin extends CI_Controller
         return $output;
     }
     
+    //count limit level
+    public function _countLimitLevel($endLoop, $user_id)
+    {
+        $query_position = $this->M_user->get_network_byposition($user_id);
+
+        if (count($query_position) != '') 
+        {
+            foreach ($query_position as $row_position) 
+            {
+                return $this->_countLimitLevel($endLoop+1, $row_position->user_id);
+            }
+        }
+        else
+        {
+            return $endLoop;
+        }
+    }
+    
     public function detailLevel($level)
     {
         $data['user']   = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
@@ -3087,7 +3266,7 @@ class Admin extends CI_Controller
             $array_level = array('FM4', 'FM5', 'FM6', 'FM7', 'FM8', 'FM9', 'FM10');
         }
 
-        $data['user_level'] = $this->M_user->get_user_level($array_level)->result();
+        $data['user_level'] = $this->M_user->get_user_level2($array_level)->result();
 
         if ($this->session->userdata('email') && $this->session->userdata('role_id') == '1') {
             $this->load->view('templates/user_header', $data);
@@ -3121,7 +3300,7 @@ class Admin extends CI_Controller
             redirect('auth');
         }
     }
-    
+
     public function detailBasecampOmset()
     {
         $data['user']   = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();        
@@ -3183,5 +3362,265 @@ class Admin extends CI_Controller
         $output .= '</form>';
 
         echo $output;
+    }
+    
+    public function omsetGlobalPerMonth($date)
+    {
+        $query = $this->M_user->get_purchase_admin_bymonth($date);
+        return $query;
+    }
+    
+    public function omsetGlobalByLevelMonth($date, $level)
+    {
+        $query_bonus = $this->M_user->get_globalbonus_bymonth_level($date, $level);
+
+        return $query_bonus['mtm'];
+    }
+    
+    public function excessGlobalByLevelMonth($date, $level)
+    {
+        $query_bonus = $this->M_user->get_excessglobal_bymonth_level($date, $level);
+
+        return $query_bonus['mtm'];
+    }
+    
+    public function news_announcement()
+    {
+        $data['user'] = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
+        $data['news'] = $this->M_user->get_all_news()->result();
+        $data['title'] = 'News';
+
+        if ($this->session->userdata('email') && $this->session->userdata('role_id') == '1') {
+            $this->load->view('templates/user_header', $data);
+            $this->load->view('templates/admin_sidebar', $data);
+            $this->load->view('templates/user_topbar', $data);
+            $this->load->view('admin/news', $data);
+            $this->load->view('templates/user_footer');
+
+            if (isset($_POST['addNews'])) {
+                $config['upload_path'] = './assets/photo/news';
+                $config['allowed_types'] = 'jpg|png|jpeg';
+                $config['max_size']  = '2048';
+                $config['remove_space'] = TRUE;
+
+                $this->load->library('upload', $config);
+                if ($this->upload->do_upload('image')) {
+                    $return = array('result' => 'success', 'file' => $this->upload->data(), 'error' => '');
+
+                    if ($return['result'] == "success") {
+                        $data_insert = [
+                            'title' => $this->input->post('title'),
+                            'message' => $this->input->post('message'),
+                            'image' => $return['file']['file_name'],
+                            'datecreate' => time(),
+                            'update_date' => 0,
+                        ];
+                        $insert = $this->M_user->insert_data('news_announce', $data_insert);
+
+                        if ($insert == true) {
+                            $this->db->set('is_news', 0);
+                            $update = $this->db->update('user');
+
+                            $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Add News Success</div>');
+                            redirect('admin/news_announcement');
+                        } else {
+                            $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Add News Failed</div>');
+                            redirect('admin/news_announcement');
+                        }
+                    } else {
+                        $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Upload Image Error</div>');
+                        redirect('admin/news_announcement');
+                    }
+                } else {
+                    $data_insert = [
+                        'title' => $this->input->post('title'),
+                        'message' => $this->input->post('message'),
+                        'datecreate' => time(),
+                        'update_date' => 0,
+                    ];
+                    $insert = $this->M_user->insert_data('news_announce', $data_insert);
+
+                    if ($insert == true) {
+                        $this->db->set('is_news', 0);
+                        $update = $this->db->update('user');
+
+                        $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Add News Success</div>');
+                        redirect('admin/news_announcement');
+                    } else {
+                        $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Add News Failed</div>');
+                        redirect('admin/news_announcement');
+                    }
+                }
+            }
+            
+            if (isset($_POST['deleteNews'])) {
+                $id = $this->input->post('id_news');
+
+                $this->db->where('id', $id);
+                $del = $this->db->delete('news_announce');
+
+                if ($del == true) {
+                    $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Delete News Success</div>');
+                    redirect('admin/news_announcement');
+                } else {
+                    $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Delete News Failed</div>');
+                    redirect('admin/news_announcement');
+                }
+            }
+        } else {
+            redirect('auth');
+        }
+    }
+    
+    public function packageMining()
+    {
+        $data['title']      = 'Package Purchase';
+        $data['user']       = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
+
+        $query_mining       = $this->M_user->show_one_data('package', 'id', '1');
+        $query_tour_korea   = $this->M_user->get_data_byid_order('package_tour', 'id', 'ASC', 'type', '1'); 
+        $query_tour_bali   = $this->M_user->get_data_byid_order('package_tour', 'id', 'ASC', 'type', '2'); 
+
+        $data['mining']     = $query_mining;
+        $data['tour_korea'] = $query_tour_korea;
+        $data['tour_bali']  = $query_tour_bali;
+
+        if ($this->session->userdata('email') && $this->session->userdata('role_id') == '1') {
+            $this->load->view('templates/user_header', $data);
+            $this->load->view('templates/admin_sidebar', $data);
+            $this->load->view('templates/user_topbar', $data);
+            $this->load->view('admin/package_mining', $data);
+            $this->load->view('templates/user_footer');
+        } else {
+            redirect('auth');
+        }
+    }
+
+    public function savePackageMining()
+    {
+        $data['user']       = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
+
+        $filecoin = htmlspecialchars($this->input->post('miningfil'), true);
+        $mtm      = htmlspecialchars($this->input->post('miningmtm'), true);
+        $zenx     = htmlspecialchars($this->input->post('miningzenx'), true);
+        
+        if ($this->session->userdata('email') && $this->session->userdata('role_id') == '1') 
+        {
+            $this->form_validation->set_rules('miningfil', 'Filecoin Price', 'required|numeric');
+            $this->form_validation->set_rules('miningmtm', 'MTM Price', 'required|numeric');
+            $this->form_validation->set_rules('miningzenx', 'Zenx Price', 'required|numeric');
+
+            if ($this->form_validation->run() == false) 
+            {
+                $this->session->set_flashdata('message', '<div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                                                Failed. Failed update data.
+                                                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                                                        <span aria-hidden="true">&times;</span>
+                                                                    </button>
+                                                                </div>');
+                    redirect('admin/packageMining');
+            }
+            else
+            {
+                $query_all_package = $this->M_user->show_all_data('package', 'ASC');
+
+                foreach($query_all_package as $row_package)
+                {
+                    $filPrice = $row_package->point * $filecoin;
+                    $mtmPrice = $row_package->point * $mtm;
+                    $zenxPrice = $row_package->point * $zenx;
+
+                    $data = [
+                        'fil' => $filPrice,
+                        'mtm' => $mtmPrice,
+                        'price_fil' => $filPrice,
+                        'price_mtm' => $mtmPrice,
+                        'price_zenx' => $zenxPrice 
+                    ];
+
+                    $update = $this->M_user->update_data_byid('package', $data, 'id', $row_package->id);
+                }
+
+                $this->session->set_flashdata('message', '<div class="alert alert-info alert-dismissible fade show" role="alert">
+                                                            Success. Data has been updated.
+                                                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                                                    <span aria-hidden="true">&times;</span>
+                                                                </button>
+                                                            </div>');
+                redirect('admin/packageMining');
+
+            }
+        }
+        else
+        {
+            redirect('auth');
+        }
+    }
+
+    public function savePackageTour()
+    {
+        $id = $this->uri->segment(3);
+        $data['user']       = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
+
+        $filecoin = htmlspecialchars($this->input->post('tourfil'), true);
+        $mtm      = htmlspecialchars($this->input->post('tourmtm'), true);
+        $zenx     = htmlspecialchars($this->input->post('tourzenx'), true);
+        $usdt     = htmlspecialchars($this->input->post('tourusdt'), true);
+        
+        if ($this->session->userdata('email') && $this->session->userdata('role_id') == '1') 
+        {
+            $this->form_validation->set_rules('tourfil', 'Filecoin Price', 'required|numeric');
+            $this->form_validation->set_rules('tourmtm', 'MTM Price', 'required|numeric');
+            $this->form_validation->set_rules('tourzenx', 'Zenx Price', 'required|numeric');
+            $this->form_validation->set_rules('tourusdt', 'USDT Price', 'required|numeric');
+
+            if ($this->form_validation->run() == false) 
+            {
+                $this->session->set_flashdata('message', '<div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                                                Failed. Failed update data 1.
+                                                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                                                        <span aria-hidden="true">&times;</span>
+                                                                    </button>
+                                                                </div>');
+                    redirect('admin/packageMining');
+            }
+            else
+            {
+                $data = [
+                    'price_fil' => $filecoin,
+                    'price_mtm' => $mtm,
+                    'price_zenx' => $zenx, 
+                    'price_usdt' => $usdt 
+                ];
+                
+                $update = $this->M_user->update_data_byid('package_tour', $data, 'id', $id);
+    
+                if($update)
+                {
+                    $this->session->set_flashdata('message', '<div class="alert alert-info alert-dismissible fade show" role="alert">
+                                                                Success. Data has been updated.
+                                                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                                                        <span aria-hidden="true">&times;</span>
+                                                                    </button>
+                                                                </div>');
+                    redirect('admin/packageMining');
+                }
+                else
+                {
+                    $this->session->set_flashdata('message', '<div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                                                Failed. Failed update data 2.
+                                                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                                                        <span aria-hidden="true">&times;</span>
+                                                                    </button>
+                                                                </div>');
+                    redirect('admin/packageMining');
+                }
+
+            }
+        }
+        else
+        {
+            redirect('auth');
+        }
     }
 }

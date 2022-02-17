@@ -89,7 +89,7 @@
                                                 <div class="progress-bar" role="progressbar" style="width: <?= ($sponsor/3)*100;?>%"
                                                     aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
                                             </div>
-                                            <div class="mt-1 small font-weight-bold">Sponsor</div>
+                                            <div class="mt-1 small font-weight-bold">Recommended</div>
                                         </div>
                                         <div class="mb-3">
                                             <div class="mb-1 small"><?= $omset < 15 ? $omset : '15' ?> BOX / 15 BOX</div>
@@ -137,7 +137,7 @@
                                                 <div class="progress-bar" role="progressbar" style="width: <?= ($sponsor/9)*100;?>%"
                                                     aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
                                             </div>
-                                            <div class="mt-1 small font-weight-bold">Sponsor</div>
+                                            <div class="mt-1 small font-weight-bold">Recommended</div>
                                         </div>
                                         <div class="mb-3">
                                             <div class="mb-1 small"><?= $omset < 45 ? $omset : '45' ?> BOX / 45 BOX</div>
@@ -223,7 +223,7 @@
                                                 <div class="progress-bar" role="progressbar" style="width: <?= ($sponsor/15)*100;?>%"
                                                     aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
                                             </div>
-                                            <div class="mt-1 small font-weight-bold">Sponsor</div>
+                                            <div class="mt-1 small font-weight-bold">Recommended</div>
                                         </div>
                                         <div class="mb-3">
                                             <div class="mb-1 small"><?= $omset < 75 ? $omset : '75' ?> BOX / 75 BOX</div>
@@ -310,7 +310,7 @@
                                                 <div class="progress-bar" role="progressbar" style="width: <?= ($sponsor/30)*100;?>%"
                                                     aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
                                             </div>
-                                            <div class="mt-1 small font-weight-bold">Sponsor</div>
+                                            <div class="mt-1 small font-weight-bold">Recommended</div>
                                         </div>
                                         <div class="mb-3">
                                             <div class="mb-1 small"><?= $omset < 150 ? $omset : '150' ?> BOX / 150 BOX</div>
@@ -396,7 +396,7 @@
                                                 <div class="progress-bar" role="progressbar" style="width: <?= ($sponsor/60)*100;?>%"
                                                     aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
                                             </div>
-                                            <div class="mt-1 small font-weight-bold">Sponsor</div>
+                                            <div class="mt-1 small font-weight-bold">Recommended</div>
                                         </div>
                                         <div class="mb-3">
                                             <div class="mb-1 small"><?= $omset < 300 ? $omset : '300' ?> BOX / 300 BOX</div>
@@ -482,7 +482,7 @@
                                                 <div class="progress-bar" role="progressbar" style="width: <?= ($sponsor/120)*100;?>%"
                                                     aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
                                             </div>
-                                            <div class="mt-1 small font-weight-bold">Sponsor</div>
+                                            <div class="mt-1 small font-weight-bold">Recommended</div>
                                         </div>
                                         <div class="mb-3">
                                             <div class="mb-1 small"><?= $omset < 600 ? $omset : '600' ?> BOX / 600 BOX</div>
@@ -566,7 +566,7 @@
                                                 <div class="progress-bar" role="progressbar" style="width: <?= ($sponsor/300)*100;?>%"
                                                     aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
                                             </div>
-                                            <div class="mt-1 small font-weight-bold">Sponsor</div>
+                                            <div class="mt-1 small font-weight-bold">Recommended</div>
                                         </div>
                                         <div class="mb-3">
                                             <div class="mb-1 small"><?= $omset < 1500 ? $omset : '1500' ?> BOX / 1500 BOX</div>
@@ -650,7 +650,7 @@
                                                 <div class="progress-bar" role="progressbar" style="width: <?= ($sponsor/540)*100;?>%"
                                                     aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
                                             </div>
-                                            <div class="mt-1 small font-weight-bold">Sponsor</div>
+                                            <div class="mt-1 small font-weight-bold">Recommended</div>
                                         </div>
                                         <div class="mb-3">
                                             <div class="mb-1 small"><?= $omset < 2700 ? $omset : '2700' ?> BOX / 2700 BOX</div>
@@ -756,7 +756,7 @@
                                                 <div class="progress-bar" role="progressbar" style="width: <?= ($sponsor/720)*100;?>%"
                                                     aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
                                             </div>
-                                            <div class="mt-1 small font-weight-bold">Sponsor</div>
+                                            <div class="mt-1 small font-weight-bold">Recommended</div>
                                         </div>
                                         <div class="mb-3">
                                             <div class="mb-1 small"><?= $omset < 3600 ? $omset : '3600' ?> BOX / 3600 BOX</div>
@@ -860,7 +860,7 @@
                                                 <div class="progress-bar" role="progressbar" style="width: <?= ($sponsor/1024)*100;?>%"
                                                     aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
                                             </div>
-                                            <div class="mt-1 small font-weight-bold">Sponsor</div>
+                                            <div class="mt-1 small font-weight-bold">Recommended</div>
                                         </div>
                                         <div class="mb-3">
                                             <div class="mb-1 small"><?= $omset < 5120 ? $omset : '5120' ?> BOX / 5120 BOX</div>

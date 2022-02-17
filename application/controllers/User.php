@@ -22,6 +22,11 @@ class User extends CI_Controller
 
         $this->load->model('M_user');
         $this->load->helper(array('form', 'url'));
+        
+        $this->output->set_header('Last-Modified: ' . gmdate("D, d M Y H:i:s") . ' GMT');
+        $this->output->set_header('Cache-Control: no-store, no-cache, must-revalidate, post-check=0, pre-check=0');
+        $this->output->set_header('Pragma: no-cache');
+        $this->output->set_header("Expires: Mon, 26 Jul 1997 05:00:00 GMT");
     }
 
     public function flag($code)
@@ -90,7 +95,8 @@ class User extends CI_Controller
             $update_notif = $this->M_user->update_data_byid('notifi', $data_notif, 'id', $this->uri->segment(3));
         }
 
-
+        $data['news']              = $this->M_user->get_all_news()->row_array();
+        $data['news_limit']        = $this->M_user->get_all_news_limit()->result();
         $query_user                = $this->M_user->get_user_byemail($this->session->userdata('email'));
         $user_id = $query_user['id'] ?? null;
         $query_today               = $this->M_user->get_today_bonus($dateNow, $user_id)->row_array();
@@ -113,6 +119,7 @@ class User extends CI_Controller
 
         $query_row_notif = $this->M_user->row_newnotif_byuser($user_id);
         $query_new_notif = $this->M_user->show_newnotif_byuser($user_id);
+        $query_new_notif_order = $this->M_user->show_newnotif_byuser_order($user_id);
 
         $query_total_purchase      = $this->M_user->sum_cart_byid($user_id);
 
@@ -120,6 +127,7 @@ class User extends CI_Controller
         $data['user']           = $query_user;
         $data['amount_notif']   = $query_row_notif;
         $data['list_notif']     = $query_new_notif;
+        $data['list_notif_order'] = $query_new_notif_order;
 
         $today_sponsorfil = $query_today['sponsorfil'] ?? null;
         $today_sponmatchingfill = $query_today['sponmatchingfil'] ?? null;
@@ -1029,7 +1037,7 @@ class User extends CI_Controller
     {
         $data_id        = $this->uri->segment(3);
         $data_package   = $this->M_user->get_packagetour_byid($data_id);
-        $id_package     = $data_package['id'];
+        $id_package     = $data_package['id'] ?? null;
 
         $query_user         = $this->M_user->get_user_byemail($this->session->userdata('email'));
         $query_row_notif    = $this->M_user->row_newnotif_byuser($query_user['id']);
@@ -1058,10 +1066,10 @@ class User extends CI_Controller
         $this->session->set_userdata('purchase', $id_package);
 
         // $data['fil'] = $data_package['fil'];
-        $data['price_fil'] = $data_package['price_fil'];
-        $data['price_mtm'] = $data_package['price_mtm'];
-        $data['price_zenx'] = $data_package['price_zenx'];
-        $data['price_usdt'] = $data_package['price_usdt'];
+        $data['price_fil'] = $data_package['price_fil'] ?? null;
+        $data['price_mtm'] = $data_package['price_mtm'] ?? null;
+        $data['price_zenx'] = $data_package['price_zenx'] ?? null;
+        $data['price_usdt'] = $data_package['price_usdt'] ?? null;
 
         // $deposit = $this->_count_deposit($query_user['id']);
 
@@ -1409,7 +1417,7 @@ class User extends CI_Controller
                             'code_bonus' => $row->code_bonus,
                             'filecoin' => 0,
                             'mtm' => $limit_count_mtm,
-                            'datecreate' => time()
+                            'datecreate' => $row->datecreate
                         ];
 
                         $this->M_user->insert_data('bonus', $data);
@@ -1425,7 +1433,7 @@ class User extends CI_Controller
                             'code_bonus' => $row->code_bonus,
                             'filecoin' => 0,
                             'mtm' => $limit_count_mtm,
-                            'datecreate' => time()
+                            'datecreate' => $row->datecreate
                         ];
 
                         $this->M_user->insert_data('bonus_sm', $data);
@@ -1439,7 +1447,7 @@ class User extends CI_Controller
                             'user_id' => $row->user_id,
                             'mtm' => $limit_count_mtm,
                             'set_amount' => '0',
-                            'datecreate' => time()
+                            'datecreate' => $row->datecreate
                         ];
 
                         $this->M_user->insert_data('bonus_maxmatching', $data);
@@ -1454,7 +1462,7 @@ class User extends CI_Controller
                             'cart_id' => $row->cart_id,
                             'amount' => $limit_count_mtm,
                             'box' => $row->box,
-                            'datecreate' => time()
+                            'datecreate' => $row->datecreate
                         ];
 
                         $this->M_user->insert_data('airdrop_mtm', $data);
@@ -1469,7 +1477,7 @@ class User extends CI_Controller
                             'user_sponsor' => $row->user_sponsor,
                             'mtm' => $limit_count_mtm,
                             'generation' => $row->generation,
-                            'datecreate' => time()
+                            'datecreate' => $row->datecreate
                         ];
 
                         $this->M_user->insert_data('bonus_binarymatch', $data);
@@ -1483,7 +1491,8 @@ class User extends CI_Controller
                             'user_id' => $row->user_id,
                             'mtm' => $limit_count_mtm,
                             'level_fm' => $row->level_fm,
-                            'datecreate' => time()
+                            'note_level' => $row->note_level,
+                            'datecreate' => $row->datecreate
                         ];
 
                         $this->M_user->insert_data('bonus_global', $data);
@@ -2157,13 +2166,16 @@ class User extends CI_Controller
         $query_row_notif    = $this->M_user->row_newnotif_byuser($query_user['id']);
         $query_new_notif    = $this->M_user->show_newnotif_byuser($query_user['id']);
         $query_total        = $this->M_user->get_total_bonus_sponsor_byid($query_user['id']);
+        $query_total_excess = $this->M_user->get_total_excess_byid($query_user['id'], 'bonus sponsor');
 
         $data['title']              = 'Bonus Sponsor';
         $data['user']               = $query_user;
         $data['bonus']              = $this->M_user->get_bonus_bysponsor($query_user['id']);
+        $data['excess_bonus']       = $this->M_user->get_excess_sponsor($query_user['id']);
         $data['amount_notif']       = $query_row_notif;
         $data['list_notif']         = $query_new_notif;
         $data['cart']               = $this->M_user->show_home_withsumpoint($query_user['id'])->row_array();
+        $data['total_excess']       = $query_total_excess['mtm'];
         $data['total_fil']          = $query_total['filecoin'];
         $data['total_mtm']          = $query_total['mtm'];
         $data['userClass']          = $this;
@@ -2191,12 +2203,15 @@ class User extends CI_Controller
         $query_row_notif    = $this->M_user->row_newnotif_byuser($query_user['id']);
         $query_new_notif    = $this->M_user->show_newnotif_byuser($query_user['id']);
         $query_total        = $this->M_user->get_total_bonus_sponsormatch_byid($query_user['id']);
+        $query_total_excess = $this->M_user->get_total_excess_byid($query_user['id'], 'bonus sponsor matching');
 
         $data['title']              = 'Bonus Sponsor Matching';
         $data['user']               = $query_user;
         $data['bonus']              = $this->M_user->get_bonus_bysponsormatching($query_user['id']);
+        $data['excess_bonus']       = $this->M_user->get_excess_sponsor_matching($query_user['id']);
         $data['amount_notif']       = $query_row_notif;
         $data['list_notif']         = $query_new_notif;
+        $data['total_excess']       = $query_total_excess['mtm'];
         $data['total_fil']          = $query_total['filecoin'];
         $data['total_mtm']          = $query_total['mtm'];
         $data['cart']               = $this->M_user->show_home_withsumpoint($query_user['id'])->row_array();
@@ -2247,13 +2262,18 @@ class User extends CI_Controller
 
         $data['title'] = 'Network';
 
-        if ($this->uri->segment(3) != '') {
+        if ($this->uri->segment(3) != '') 
+        {
             $id = $this->uri->segment(3);
 
             $query_user    = $this->M_user->get_user_byid($id);
-        } else {
+        } 
+        else 
+        {
             $query_user    = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
         }
+
+        $limitLevel     = $this->_countLimitLevel(0, $query_user['id']);
 
         $idLeft         = $this->countIDL($query_user['id']);
         $idRight        = $this->countIDR($query_user['id']);
@@ -2276,6 +2296,7 @@ class User extends CI_Controller
         $data['cart']               = $this->M_user->show_home_withsumpoint($query_user['id'])->row_array();
         $data['network']            = $this->_showNetwork($query_user['id'], $query_user['country_code'], $query_user['username']);
         $sidebar['user']            = $this->db->get_where('user', ['email' => $this->session->userdata('email')])->row_array();
+        $data['limitLevel']         = $limitLevel;
 
         if ($this->session->userdata('email')) {
             if ($this->session->userdata('role_id') == '2') {
@@ -2354,66 +2375,6 @@ class User extends CI_Controller
             
         $output .= '<div id="result'.$id.'" class="hideNetwork"></div>';
 
-        // if (count($query_position) != '') {
-        //     $output .= '<ul>';
-
-        //     foreach ($query_position as $row_position) {
-        //         $countLeft      = $this->countPositionL($row_position->user_id);
-        //         $countRight     = $this->countPositionR($row_position->user_id);
-        //         $balancePoint   = $this->balance_point($row_position->user_id);
-        //         // $increaseLeft   = $this->countPositionL($row_position->user_id) - $this->increasePoint($row_position->user_id, 'L');
-        //         // $increaseRight  = $this->countPositionR($row_position->user_id) - $this->increasePoint($row_position->user_id, 'R');
-        //         $pointTodayL    = $this->countPointTodayL($row_position->user_id);
-        //         $pointTodayR    = $this->countPointTodayR($row_position->user_id);
-        //         $idLeft         = $this->countIDL($row_position->user_id);
-        //         $idRight        = $this->countIDR($row_position->user_id);
-        //         $query_box      = $this->M_user->sumPackage($row_position->user_id);
-        //         $package_name   = $query_box['point'] ?? null;
-        //         $package_color  = $this->_color_network($package_name);
-
-        //         if ($balancePoint) {
-        //             // $balance_a = $balancePoint['amount_left'] + $increaseLeft;
-        //             // $balance_b = $balancePoint['amount_right'] + $increaseRight;
-        //             $balance_a = $balancePoint['balance_a'] + $pointTodayL;
-        //             $balance_b = $balancePoint['balance_b'] + $pointTodayR;
-        //         } else {
-        //             $balance_a = $pointTodayL+$countLeft;
-        //             $balance_b = $pointTodayR+$countRight;
-        //         }
-
-
-        //         $output .=    '<li>';
-        //         $output .=      '<a href="' . base_url('user/network/') . $row_position->user_id . '">
-        //                             <div class="item" style="border:7px solid ' . $package_color . '">
-        //                                 <img class="flag-network" src="' . base_url('assets/img/') . $this->flag($row_position->country_code) . '" alt="#" width="40px">
-        //                                 <h1 class="text-uppercase name-network">' . $row_position->username . '</h1>
-        //                                 <p>' . $row_position->fm . '</p>
-        //                                 <div class="d-flex justify-content-center align-content-center align-items-center position-relative">
-        //                                     <div class="text-right">
-        //                                         <p>(' . $idLeft . ' ID) left</p>
-        //                                         <p style="color:' . $package_color . '">' . $balance_a . '&nbsp;(' . $countLeft . ')</p>
-        //                                         <p>Increase</p>
-        //                                         <p style="color:' . $package_color . '">+ ' . $pointTodayL . '</p>
-        //                                     </div>
-        //                                     <div class="line"></div>
-        //                                     <div class="text-left">
-        //                                         <p>right (' . $idRight . ' ID)</p>
-        //                                         <p style="color:' . $package_color . '">' . $balance_b . '&nbsp;(' . $countRight . ')</p>
-        //                                         <p>Increase</p>
-        //                                         <p style="color:' . $package_color . '">+ ' . $pointTodayR . '</p>
-        //                                     </div>
-        //                                 </div>
-        //                                 <p class="box-network text-white" style="background-color:' . $package_color . '">' . $package_name . ' BOX</p>
-        //                             </div>
-        //                         </a>';
-
-        //         $output .= $this->_loopingNetwork(1, $endLoop, $row_position->user_id);
-
-        //         $output .=    '</li>';
-        //     }
-
-        //     $output .=  '</ul>';
-        // }
         $output .=    '</li>';
         $output .=  '</ul>';
 
@@ -2424,6 +2385,16 @@ class User extends CI_Controller
     {
         $id             = $this->input->post('user');
         $query_position = $this->M_user->get_network_byposition($id);
+        $level          = $this->input->post('level');
+
+        if(empty($level))
+        {
+            $endLoop = 0;
+        }
+        else
+        {
+            $endLoop        = $level -1;
+        }
 
         $output         = '';
 
@@ -2470,15 +2441,39 @@ class User extends CI_Controller
                                             <p>Increase</p>
                                             <p style="color:' . $package_color . '">+ ' . $pointTodayR . '</p>
                                         </div>
-                                    </div>
-                                    <p class="box-network text-white" style="background-color:' . $package_color . '">' . $package_name . ' BOX</p>
-                                    <button id="'.$row_position->user_id.'" onClick="reply_click_net(this.id)" class="charetnet">
-                                        <i class="fas fa-caret-down"></i>
-                                    </button>
-                                </div>';
+                                    </div>';
+
+                $query_position_bottom = $this->M_user->get_network_byposition($row_position->user_id);
+
+                if(count($query_position_bottom) != '')
+                {
+                    $output .= '<p class="box-network text-white" style="background-color:' . $package_color . '">' . $package_name . ' BOX</p>
+                                        <button id="'.$row_position->user_id.'" onClick="reply_click_net(this.id)" class="charetnet">
+                                            <i class="fas fa-caret-up"></i>
+                                        </button>
+                                    </div>';
+                        
+                    $output .= '<div id="result'.$row_position->user_id.'" class="displayNetwork">';
                     
-                    $output .= '<div id="result'.$row_position->user_id.'" class="hideNetwork"></div>';
-    
+                    $output .= $this->_loopingNetwork(1, $endLoop, $row_position->user_id);
+                    
+                    $output .= '</div>';
+                }
+                else
+                {
+                    $output .= '<p class="box-network text-white" style="background-color:' . $package_color . '">' . $package_name . ' BOX</p>
+                                        <button id="'.$row_position->user_id.'" onClick="reply_click_net(this.id)" class="charetnet">
+                                            <i class="fas fa-caret-down"></i>
+                                        </button>
+                                    </div>';
+                        
+                    $output .= '<div id="result'.$row_position->user_id.'" class="hideNetwork">';
+                    
+                    $output .= $this->_loopingNetwork(1, $endLoop, $row_position->user_id);
+                    
+                    $output .= '</div>';
+                }
+                
                 $output .=    '</li>';
                 
             }
@@ -2490,10 +2485,10 @@ class User extends CI_Controller
 
     private function _loopingNetwork($firstLoop, $endLoop, $user_id)
     {
-        // if($firstLoop > $endLoop)
-        // {
-        //     return false;
-        // }
+        if($firstLoop > $endLoop)
+        {
+            return false;
+        }
 
         $query_position = $this->M_user->get_network_byposition($user_id);
 
@@ -2502,12 +2497,11 @@ class User extends CI_Controller
         if (count($query_position) != '') {
             $output .= '<ul>';
 
-            foreach ($query_position as $row_position) {
+            foreach ($query_position as $row_position) 
+            {
                 $countLeft      = $this->countPositionL($row_position->user_id);
                 $countRight     = $this->countPositionR($row_position->user_id);
                 $balancePoint   = $this->balance_point($row_position->user_id);
-                // $increaseLeft   = $this->countPositionL($row_position->user_id) - $this->increasePoint($row_position->user_id, 'L');
-                // $increaseRight  = $this->countPositionR($row_position->user_id) - $this->increasePoint($row_position->user_id, 'R');
                 $pointTodayL    = $this->countPointTodayL($row_position->user_id);
                 $pointTodayR    = $this->countPointTodayR($row_position->user_id);
                 $idLeft         = $this->countIDL($row_position->user_id);
@@ -2515,44 +2509,70 @@ class User extends CI_Controller
                 $query_box      = $this->M_user->sumPackage($row_position->user_id);
                 $package_name   = $query_box['point'] ?? null;
                 $package_color  = $this->_color_network($package_name);
-
+    
                 if ($balancePoint) {
-                    // $balance_a = $balancePoint['amount_left'] + $increaseLeft;
-                    // $balance_b = $balancePoint['amount_right'] + $increaseRight;
                     $balance_a = $balancePoint['balance_a'] + $pointTodayL;
                     $balance_b = $balancePoint['balance_b'] + $pointTodayR;
                 } else {
-                    $balance_a = $countLeft;
-                    $balance_b = $countRight;
+                    $balance_a = $pointTodayL+$countLeft;
+                    $balance_b = $pointTodayR+$countRight;
                 }
-
+    
                 $output .=    '<li>';
-
-                $output .=      '<a href="' . base_url('user/network/') . $row_position->user_id . '">
-                                    <div class="item" style="border:7px solid ' . $package_color . '">
-                                        <img class="flag-network" src="' . base_url('assets/img/') . $this->flag($row_position->country_code) . '" alt="#" width="40px">
-                                        <h1 class="text-uppercase name-network">' . $row_position->username . '</h1>
-                                        <p>' . $row_position->fm . '</p>
-                                        <div class="d-flex justify-content-center align-content-center align-items-center position-relative">
-                                            <div class="text-right">
-                                                <p>(' . $idLeft . ' ID) left</p>
-                                                <p style="color:' . $package_color . '">' . $balance_a . '&nbsp;(' . $countLeft . ')</p>
-                                                <p>Increase</p>
-                                                <p style="color:' . $package_color . '">+ ' . $pointTodayL . '</p>
-                                            </div>
-                                            <div class="line"></div>
-                                            <div class="text-left">
-                                                <p>right (' . $idRight . ' ID)</p>
-                                                <p style="color:' . $package_color . '">' . $balance_b . '&nbsp;(' . $countRight . ')</p>
-                                                <p>Increase</p>
-                                                <p style="color:' . $package_color . '">+ ' . $pointTodayR . '</p>
-                                            </div>
+                $output .=      '<div class="item" style="border:7px solid ' . $package_color . '">
+                                    <img class="flag-network" src="' . base_url('assets/img/') . $this->flag($row_position->country_code) . '" alt="#" width="40px">
+                                    <h1 class="text-uppercase name-network" id="'.strtolower($row_position->username).'">' . strtolower($row_position->username) . '</h1>
+                                    <p>' . $row_position->fm . '</p>
+                                    <div class="d-flex justify-content-center align-content-center align-items-center position-relative">
+                                        <div class="text-right">
+                                            <p>(' . $idLeft . ' ID) left</p>
+                                            <p style="color:' . $package_color . '">' . $balance_a . '&nbsp;(' . $countLeft . ')</p>
+                                            <p>Increase</p>
+                                            <p style="color:' . $package_color . '">+ ' . $pointTodayL . '</p>
                                         </div>
-                                        <p class="box-network text-white" style="background-color:' . $package_color . '">' . $package_name . ' BOX</p>
-                                    </div>
-                                </a>';
+                                        <div class="line"></div>
+                                        <div class="text-left">
+                                            <p>right (' . $idRight . ' ID)</p>
+                                            <p style="color:' . $package_color . '">' . $balance_b . '&nbsp;(' . $countRight . ')</p>
+                                            <p>Increase</p>
+                                            <p style="color:' . $package_color . '">+ ' . $pointTodayR . '</p>
+                                        </div>
+                                    </div>';
+
+                $query_position_bottom = $this->M_user->get_network_byposition($row_position->user_id);
+
+                if(count($query_position_bottom) != '')
+                {
+                    $output .=      '<p class="box-network text-white" style="background-color:' . $package_color . '">' . $package_name . ' BOX</p>
+                                        <button id="'.$row_position->user_id.'" onClick="reply_click_net(this.id)" class="charetnet">
+                                            <i class="fas fa-caret-down"></i>
+                                        </button>
+                                    </div>';
+                }
+                else
+                {
+                    
+                    $output .=      '<p class="box-network text-white" style="background-color:' . $package_color . '">' . $package_name . ' BOX</p>
+                                        <button id="'.$row_position->user_id.'" onClick="reply_click_net(this.id)" class="charetnet">
+                                            <i class="fas fa-caret-down"></i>
+                                        </button>
+                                    </div>';
+                }
+                   
+                
+                if($firstLoop == $endLoop)
+                {
+                    $output .= '<div id="result'.$row_position->user_id.'" class="hideNetwork">';
+                }
+                else
+                {
+                    $output .= '<div id="result'.$row_position->user_id.'" class="displayNetwork">';
+                }
+                
                 //looping
                 $output .= $this->_loopingNetwork($firstLoop + 1, $endLoop, $row_position->user_id);
+                
+                $output .= '</div>';
 
                 $output .=      '</li>';
             }
@@ -2561,6 +2581,24 @@ class User extends CI_Controller
         }
 
         return $output;
+    }
+    
+    //count limit level
+    public function _countLimitLevel($endLoop, $user_id)
+    {
+        $query_position = $this->M_user->get_network_byposition($user_id);
+
+        if (count($query_position) != '') 
+        {
+            foreach ($query_position as $row_position) 
+            {
+                return $this->_countLimitLevel($endLoop+1, $row_position->user_id);
+            }
+        }
+        else
+        {
+            return $endLoop;
+        }
     }
 
     /**Count total id network left */
@@ -3071,13 +3109,16 @@ class User extends CI_Controller
         $query_row_notif    = $this->M_user->row_newnotif_byuser($query_user['id']);
         $query_new_notif    = $this->M_user->show_newnotif_byuser($query_user['id']);
         $query_total        = $this->M_user->get_total_bonus_pairing_byid($query_user['id']);
+        $query_total_excess = $this->M_user->get_total_excess_pairing_byid($query_user['id']);
 
         $data['title']              = 'Pairing';
         $data['user']               = $query_user;
         $data['bonus']              = $this->M_user->get_bonus_pairingmatching($query_user['id']);
+        $data['bonus_excess']       = $this->M_user->get_excess_pairing($query_user['id']);
         $data['amount_notif']       = $query_row_notif;
         $data['list_notif']         = $query_new_notif;
         $data['total_mtm']          = $query_total['mtm'];
+        $data['total_mtm_excess']   = $query_total_excess['mtm'];
 
         $data['cart']               = $this->M_user->show_home_withsumpoint($query_user['id'])->row_array();
 
@@ -3506,14 +3547,17 @@ class User extends CI_Controller
         $query_row_notif    = $this->M_user->row_newnotif_byuser($query_user['id']);
         $query_new_notif    = $this->M_user->show_newnotif_byuser($query_user['id']);
         $query_total        = $this->M_user->get_total_bonus_pairingmatch_byid($query_user['id']);
+        $query_total_excess = $this->M_user->get_total_excess_pairingmatch_byid($query_user['id']);
 
         $data['title']              = 'Pairing Matching';
         $data['user']               = $query_user;
         $data['bonus']              = $this->M_user->get_bonus_binarymatch($query_user['id']);
+        $data['excess']             = $this->M_user->get_excess_binarymatch($query_user['id']);
         $data['amount_notif']       = $query_row_notif;
         $data['list_notif']         = $query_new_notif;
         $data['cart']               = $this->M_user->show_home_withsumpoint($query_user['id'])->row_array();
         $data['total']              = $query_total['mtm'];
+        $data['total_excess']       = $query_total_excess['mtm'];
 
         if ($this->session->userdata('email') && $this->session->userdata('role_id') == '2') {
             $this->load->view('templates/user_header', $data);
@@ -3531,19 +3575,22 @@ class User extends CI_Controller
         $this->_unset_payment();
 
         $dateNow    = date('Y-m-d');
-        $monthNow   = date('m');
+        $monthNow   = date('Y-m');
 
         $query_user         = $this->M_user->get_user_byemail($this->session->userdata('email'));
         $query_row_notif    = $this->M_user->row_newnotif_byuser($query_user['id']);
         $query_new_notif    = $this->M_user->show_newnotif_byuser($query_user['id']);
         $query_total        = $this->M_user->get_total_bonus_global_byid($query_user['id']);
+        $query_total_excess = $this->M_user->get_total_excess_byid($query_user['id'], 'bonus global');
 
         $data['title']              = 'Bonus Global';
         $data['user']               = $query_user;
         $data['bonus']              = $this->M_user->get_bonus_global($query_user['id']);
+        $data['excess_bonus']       = $this->M_user->get_excess_global($query_user['id']);
         $data['amount_notif']       = $query_row_notif;
         $data['list_notif']         = $query_new_notif;
         $data['cart']               = $this->M_user->show_home_withsumpoint($query_user['id'])->row_array();
+        $data['total_excess']       = $query_total_excess['mtm'];
         $data['total']              = $query_total['mtm'];
 
         $fm = $data['cart']['fm'] ?? null;
@@ -3553,10 +3600,43 @@ class User extends CI_Controller
         $query_today_omset      = $this->M_user->get_today_purchase($dateNow);
         $query_current_omset    = $this->M_user->get_currentmonth_purchase($monthNow);
 
+        $today_omset_fill       = $query_today_omset['fill'] + ($query_today_omset['mtm'] / 4) + ($query_today_omset['zenx'] / 12); 
+        $today_omset_mtm        = $today_omset_fill * 4;
+
+        $current_omset_fill     = $query_current_omset['fill'] + ($query_current_omset['mtm'] / 4) + ($query_current_omset['zenx'] / 12);
+        $current_omset_mtm      =  $current_omset_fill * 4;
+
         $data['today_fm']        = $query_fm_today;
         $data['all_fm']          = $query_all_fm;
-        $data['today_omset']     = $query_today_omset['fil'];
-        $data['current_omset']   = $query_current_omset['fil'];
+        $data['today_omset']     = $today_omset_mtm;
+        $data['current_omset']   = $current_omset_mtm;
+        $data['omset_fil']      = $current_omset_fill;
+
+        $dateLimit = $monthNow.'-15';
+
+        $query_fm4 = $this->M_user->count_fm_bymonth_now($dateLimit, 'FM4');
+        $query_fm5 = $this->M_user->count_fm_bymonth_now($dateLimit, 'FM5');
+        $query_fm6 = $this->M_user->count_fm_bymonth_now($dateLimit, 'FM6');
+        $query_fm7 = $this->M_user->count_fm_bymonth_now($dateLimit, 'FM7');
+        $query_fm8 = $this->M_user->count_fm_bymonth_now($dateLimit, 'FM8');
+        $query_fm9 = $this->M_user->count_fm_bymonth_now($dateLimit, 'FM9');
+        $query_fm10 = $this->M_user->count_fm_bymonth_now($dateLimit, 'FM10');
+
+        $amount_fm4 = $query_fm4+$query_fm5+$query_fm6+$query_fm7+$query_fm8+$query_fm9+$query_fm10;
+        $amount_fm5 = $query_fm5+$query_fm6+$query_fm7+$query_fm8+$query_fm9+$query_fm10;
+        $amount_fm6 = $query_fm6+$query_fm7+$query_fm8+$query_fm9+$query_fm10;
+        $amount_fm7 = $query_fm7+$query_fm8+$query_fm9+$query_fm10;
+        $amount_fm8 = $query_fm8+$query_fm9+$query_fm10;
+        $amount_fm9 = $query_fm9+$query_fm10;
+        $amount_fm10 = $query_fm10;
+
+        $data['fm4']  = $amount_fm4;
+        $data['fm5']  = $amount_fm5;
+        $data['fm6']  = $amount_fm6;
+        $data['fm7']  = $amount_fm7;
+        $data['fm8']  = $amount_fm8;
+        $data['fm9']  = $amount_fm9;
+        $data['fm10'] = $amount_fm10;
 
         if ($this->session->userdata('email') && $this->session->userdata('role_id') == '2') {
             $this->load->view('templates/user_header', $data);
@@ -3564,6 +3644,84 @@ class User extends CI_Controller
             $this->load->view('templates/user_topbar', $data);
             $this->load->view('user/bonus/global', $data);
             $this->load->view('templates/user_footer');
+        } else {
+            redirect('auth');
+        }
+    }
+    
+    public function detailLevelMonthNow()
+    {
+        $query_user   = $this->M_user->get_user_byemail($this->session->userdata('email'));
+
+        $data['title']              = 'Bonus Global';
+        $data['user']               = $query_user;
+
+        $query_row_notif    = $this->M_user->row_newnotif_byuser($query_user['id']);
+        $query_new_notif    = $this->M_user->show_newnotif_byuser($query_user['id']);
+
+        $data['amount_notif']       = $query_row_notif;
+        $data['list_notif']         = $query_new_notif;
+
+        $data['cart']               = $this->M_user->show_home_withsumpoint($query_user['id'])->row_array();
+
+        $fm = $data['cart']['fm'];
+        $array_fm = explode('M', $fm);
+        $level_user = $array_fm[1];
+        
+        $level          = $this->uri->segment(3);
+        $array_level    = explode('M', $level);
+        $level_url      = $array_level[1];
+
+        if($level == 'FM4')
+        {
+            $level_array = array('FM4', 'FM5', 'FM6', 'FM7', 'FM8', 'FM9', 'FM10');
+        }
+        elseif($level == 'FM5')
+        {
+            $level_array = array('FM5', 'FM6', 'FM7', 'FM8', 'FM9', 'FM10');
+        }
+        elseif($level == 'FM6')
+        {
+            $level_array = array('FM6', 'FM7', 'FM8', 'FM9', 'FM10');
+        }
+        elseif($level == 'FM7')
+        {
+            $level_array = array('FM7', 'FM8', 'FM9', 'FM10');
+        }
+        elseif($level == 'FM8')
+        {
+            $level_array = array('FM8', 'FM9', 'FM10');
+        }
+        elseif($level == 'FM9')
+        {
+            $level_array = array('FM9', 'FM10');
+        }
+        elseif($level == 'FM10')
+        {
+            $level_array = array('FM10');
+        }
+
+        $monthNow   = date('Y-m');
+        $dateLimit  = $monthNow.'-15';
+
+        $query_detail   = $this->M_user->get_level_monthnow_user($dateLimit, $level_array);
+        $data['detail'] = $query_detail;
+
+        
+        if ($this->session->userdata('email') && $this->session->userdata('role_id') == '2') 
+        {
+            if($level_url > $level_user)
+            {
+                redirect('user');
+            }
+            else
+            {
+                $this->load->view('templates/user_header', $data);
+                $this->load->view('templates/user_sidebar', $data);
+                $this->load->view('templates/user_topbar', $data);
+                $this->load->view('user/bonus/global_level', $data);
+                $this->load->view('templates/user_footer');
+            }
         } else {
             redirect('auth');
         }
@@ -4435,15 +4593,8 @@ class User extends CI_Controller
 
     public function withdrawal_fil()
     {
-        if (!empty($this->uri->segment(3))) {
-            $id_notif = $this->uri->segment(3);
-
-            //update notification
-            $data_notif = [
-                'is_show' => 1
-            ];
-
-            $update_notif = $this->M_user->update_data_byid('notifi', $data_notif, 'id', $id_notif);
+        if (!empty($this->uri->segment(4))) {
+            $id_notif = $this->uri->segment(4);
         }
 
         $query_user                 = $this->M_user->get_user_byemail($this->session->userdata('email'));
@@ -4533,21 +4684,49 @@ class User extends CI_Controller
                                     $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">OTP code is wrong</div>');
                                     redirect('user/withdrawal_fil');
                                 } else {
-                                    $withdrawal = [
-                                        'user_id' => $user_id,
-                                        'coin_type' => 'filecoin',
-                                        'wallet_address' => $wallet,
-                                        'amount' => $amount,
-                                        'total' => $total,
-                                        'datecreate' => time(),
-                                    ];
-                                    $insert = $this->M_user->insert_data('withdrawal', $withdrawal);
-                                    if ($insert == true) {
-                                        $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Request Withdrawal Success</div>');
-                                        redirect('user/withdrawal_fil');
+                                     if (!empty($this->uri->segment(4))) {
+                                        $id_wd = $this->uri->segment(3);
+                                        $data_update = [
+                                            'wallet_address' => $wallet,
+                                            'amount' => $amount,
+                                            'total' => $total,
+                                            'note' => ''
+                                        ];
+
+                                        $update_cart = $this->M_user->update_data_byid('withdrawal', $data_update, 'id', $id_wd);
+
+
+                                        $data_notif = [
+                                            'is_show' => 1
+                                        ];
+                                        $id_notif = $this->uri->segment(4);
+                                        $update_notif = $this->M_user->update_data_byid('notifi', $data_notif, 'id', $id_notif);
+
+                                        if ($update_notif == true) {
+                                            //update notification
+                                            $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Request Withdrawal Success</div>');
+                                            redirect('user/withdrawal_fil');
+                                        } else {
+                                            $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Request Withdrawal Failed</div>');
+                                            redirect('user/withdrawal_fil');
+                                        }
                                     } else {
-                                        $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Request Withdrawal Failed</div>');
-                                        redirect('user/withdrawal_fil');
+                                        $withdrawal = [
+                                            'user_id' => $user_id,
+                                            'coin_type' => 'filecoin',
+                                            'wallet_address' => $wallet,
+                                            'amount' => $amount,
+                                            'total' => $total,
+                                            'datecreate' => time(),
+                                        ];
+                                        $insert = $this->M_user->insert_data('withdrawal', $withdrawal);
+                                        if ($insert == true) {
+                                            $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Request Withdrawal Success</div>');
+                                            redirect('user/withdrawal_fil');
+                                        } else {
+                                            $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Request Withdrawal Failed</div>');
+                                            redirect('user/withdrawal_fil');
+                                        }
                                     }
                                 }
                             }
@@ -4603,15 +4782,8 @@ class User extends CI_Controller
 
     public function withdrawal_mtm()
     {
-        if (!empty($this->uri->segment(3))) {
-            $id_notif = $this->uri->segment(3);
-
-            //update notification
-            $data_notif = [
-                'is_show' => 1
-            ];
-
-            $update_notif = $this->M_user->update_data_byid('notifi', $data_notif, 'id', $id_notif);
+        if (!empty($this->uri->segment(4))) {
+            $id_notif = $this->uri->segment(4);
         }
 
         $query_user                 = $this->M_user->get_user_byemail($this->session->userdata('email'));
@@ -4700,21 +4872,49 @@ class User extends CI_Controller
                                     $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">OTP code is wrong</div>');
                                     redirect('user/withdrawal_mtm');
                                 } else {
-                                    $withdrawal = [
-                                        'user_id' => $user_id,
-                                        'coin_type' => 'mtm',
-                                        'wallet_address' => $wallet,
-                                        'amount' => $amount,
-                                        'total' => $total,
-                                        'datecreate' => time(),
-                                    ];
-                                    $insert = $this->M_user->insert_data('withdrawal', $withdrawal);
-                                    if ($insert == true) {
-                                        $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Request Withdrawal Success</div>');
-                                        redirect('user/withdrawal_mtm');
+                                     if (!empty($this->uri->segment(4))) {
+                                        $id_wd = $this->uri->segment(3);
+                                        $data_update = [
+                                            'wallet_address' => $wallet,
+                                            'amount' => $amount,
+                                            'total' => $total,
+                                            'note' => ''
+                                        ];
+
+                                        $update_cart = $this->M_user->update_data_byid('withdrawal', $data_update, 'id', $id_wd);
+
+
+                                        $data_notif = [
+                                            'is_show' => 1
+                                        ];
+                                        $id_notif = $this->uri->segment(4);
+                                        $update_notif = $this->M_user->update_data_byid('notifi', $data_notif, 'id', $id_notif);
+
+                                        if ($update_notif == true) {
+                                            //update notification
+                                            $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Request Withdrawal Success</div>');
+                                            redirect('user/withdrawal_mtm');
+                                        } else {
+                                            $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Request Withdrawal Failed</div>');
+                                            redirect('user/withdrawal_mtm');
+                                        }
                                     } else {
-                                        $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Request Withdrawal Failed</div>');
-                                        redirect('user/withdrawal_mtm');
+                                        $withdrawal = [
+                                            'user_id' => $user_id,
+                                            'coin_type' => 'mtm',
+                                            'wallet_address' => $wallet,
+                                            'amount' => $amount,
+                                            'total' => $total,
+                                            'datecreate' => time(),
+                                        ];
+                                        $insert = $this->M_user->insert_data('withdrawal', $withdrawal);
+                                        if ($insert == true) {
+                                            $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Request Withdrawal Success</div>');
+                                            redirect('user/withdrawal_mtm');
+                                        } else {
+                                            $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Request Withdrawal Failed</div>');
+                                            redirect('user/withdrawal_mtm');
+                                        }
                                     }
                                 }
                             }
@@ -4730,13 +4930,6 @@ class User extends CI_Controller
     {
         if (!empty($this->uri->segment(3))) {
             $id_notif = $this->uri->segment(3);
-
-            //update notification
-            $data_notif = [
-                'is_show' => 1
-            ];
-
-            $update_notif = $this->M_user->update_data_byid('notifi', $data_notif, 'id', $id_notif);
         }
 
         $query_user                 = $this->M_user->get_user_byemail($this->session->userdata('email'));
@@ -4824,21 +5017,49 @@ class User extends CI_Controller
                                     $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">OTP code is wrong</div>');
                                     redirect('user/withdrawal_zenx');
                                 } else {
-                                    $withdrawal = [
-                                        'user_id' => $user_id,
-                                        'coin_type' => 'zenx',
-                                        'wallet_address' => $wallet,
-                                        'amount' => $amount,
-                                        'total' => $total,
-                                        'datecreate' => time(),
-                                    ];
-                                    $insert = $this->M_user->insert_data('withdrawal', $withdrawal);
-                                    if ($insert == true) {
-                                        $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Request Withdrawal Success</div>');
-                                        redirect('user/withdrawal_zenx');
+                                     if (!empty($this->uri->segment(4))) {
+                                        $id_wd = $this->uri->segment(3);
+                                        $data_update = [
+                                            'wallet_address' => $wallet,
+                                            'amount' => $amount,
+                                            'total' => $total,
+                                            'note' => ''
+                                        ];
+
+                                        $update_cart = $this->M_user->update_data_byid('withdrawal', $data_update, 'id', $id_wd);
+
+
+                                        $data_notif = [
+                                            'is_show' => 1
+                                        ];
+                                        $id_notif = $this->uri->segment(4);
+                                        $update_notif = $this->M_user->update_data_byid('notifi', $data_notif, 'id', $id_notif);
+
+                                        if ($update_notif == true) {
+                                            //update notification
+                                            $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Request Withdrawal Success</div>');
+                                            redirect('user/withdrawal_zenx');
+                                        } else {
+                                            $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Request Withdrawal Failed</div>');
+                                            redirect('user/withdrawal_zenx');
+                                        }
                                     } else {
-                                        $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Request Withdrawal Failed</div>');
-                                        redirect('user/withdrawal_zenx');
+                                        $withdrawal = [
+                                            'user_id' => $user_id,
+                                            'coin_type' => 'zenx',
+                                            'wallet_address' => $wallet,
+                                            'amount' => $amount,
+                                            'total' => $total,
+                                            'datecreate' => time(),
+                                        ];
+                                        $insert = $this->M_user->insert_data('withdrawal', $withdrawal);
+                                        if ($insert == true) {
+                                            $this->session->set_flashdata('message', '<div class="alert alert-success" role="alert">Request Withdrawal Success</div>');
+                                            redirect('user/withdrawal_zenx');
+                                        } else {
+                                            $this->session->set_flashdata('message', '<div class="alert alert-danger" role="alert">Request Withdrawal Failed</div>');
+                                            redirect('user/withdrawal_zenx');
+                                        }
                                     }
                                 }
                             }
@@ -5093,7 +5314,7 @@ class User extends CI_Controller
         $data['amount_notif']       = $query_row_notif;
         $data['list_notif']         = $query_new_notif;
         $data['cart']               = $this->M_user->show_home_withsumpoint($query_user['id'])->row_array();
-        $data['total_fil']          = $query_total['sponsorfil'] + $query_total['sponmatchingfil'] + $query_total['minmatching'] + $query_total['minpairing'] + $query_total['basecampfill'];
+        $data['total_fil']          = $query_total['sponsorfil'] + $query_total['sponmatchingfil'] + $query_total['minmatching'] + $query_total['minpairing'];
         $data['balance']            = $data['total_fil'] - $query_transfer_bonus_fill['amount'];
 
         if ($this->session->userdata('email') && $this->session->userdata('role_id') == '2') {
@@ -5319,7 +5540,7 @@ class User extends CI_Controller
         //echo $user['id'];
     }
     
-     public function bonusBasecamp()
+    public function bonusBasecamp()
     {
         $this->_unset_payment();
         $date = date('Y-m-d');
@@ -5329,26 +5550,72 @@ class User extends CI_Controller
         $query_row_notif    = $this->M_user->row_newnotif_byuser($query_user['id']);
         $query_new_notif    = $this->M_user->show_newnotif_byuser($query_user['id']);
         $query_total        = $this->M_user->get_total_basecamp_byid($query_user['id']);
+        $query_total_box    = $this->M_user->get_total_basecampbox_byid($query_user['id']);
+        $query_total_excess = $this->M_user->get_total_excess_basecamp_byid($query_user['id']);
+        $query_total_collected = $this->M_user->get_total_collected_basecamp_byid($query_user['id']);
+        $query_total_collected_box = $this->M_user->get_total_collectedbox_basecamp_byid($query_user['id']);
 
         $basecamp = $query_user['basecamp'] ?? null;
 
         $data['title']              = 'Bonus Basecamp';
         $data['user']               = $query_user;
         $data['bonus']              = $this->M_user->get_bonus_basecamp($query_user['id']);
+        $data['bonus_excess']       = $this->M_user->get_excess_basecamp($query_user['id']);
+        $data['bonus_collected']    = $this->M_user->get_collected_basecamp($query_user['id']);
         $data['amount_notif']       = $query_row_notif;
         $data['list_notif']         = $query_new_notif;
         $data['cart']               = $this->M_user->show_home_withsumpoint($query_user['id'])->row_array();
         $data['userClass']          = $this;
         $data['payment']            = $this->M_user->show_cart_byid($query_user['id']);
         $data['today_omset']        = $this->M_user->get_today_purchase_basecamp($date, $basecamp);
-        $data['total_omset']        = $this->M_user->get_current_purchase_basecamp($month, $basecamp);
+        $data['total_omset']        = $this->M_user->get_current_purchase_basecamp($date, $basecamp);
+        $data['today_omset_box']    = $this->M_user->get_today_purchasebox_basecamp($date, $basecamp);
+        $data['total_omset_box']    = $this->M_user->get_current_purchasebox_basecamp($month, $basecamp);
         $data['total']              = $query_total['mtm'];
+        $data['total_box']          = $query_total_box['point'];
+        $data['total_excess']       = $query_total_excess['mtm'];
+        $data['total_collected']    = $query_total_collected['mtm'];
+        $data['total_collected_box']= $query_total_collected_box['point'];
 
         if ($this->session->userdata('email') && $this->session->userdata('role_id') == '2') {
             $this->load->view('templates/user_header', $data);
             $this->load->view('templates/user_sidebar', $data);
             $this->load->view('templates/user_topbar', $data);
             $this->load->view('user/bonus/basecamp', $data);
+            $this->load->view('templates/user_footer');
+        } else {
+            redirect('auth');
+        }
+    }
+    
+    public function news_announcement()
+    {
+        $this->_unset_payment();
+        $query_user         = $this->M_user->get_user_byemail($this->session->userdata('email'));
+        $query_row_notif    = $this->M_user->row_newnotif_byuser($query_user['id']);
+        $query_new_notif    = $this->M_user->show_newnotif_byuser($query_user['id']);
+
+        if ($query_user['is_news'] == 0) {
+            $data_news = [
+                'is_news' => 1
+            ];
+            $update_news = $this->M_user->update_data_byid('user', $data_news, 'id', $query_user['id']);
+        }
+
+        $data['title']              = 'News';
+        $data['user']               = $query_user;
+        $data['amount_notif']       = $query_row_notif;
+        $data['list_notif']         = $query_new_notif;
+        $data['cart']               = $this->M_user->show_home_withsumpoint($query_user['id'])->row_array();
+        $data['userClass']          = $this;
+        $data['payment']            = $this->M_user->show_cart_byid($query_user['id']);
+        $data['news']               = $this->M_user->get_all_news()->result();
+
+        if ($this->session->userdata('email') && $this->session->userdata('role_id') == '2') {
+            $this->load->view('templates/user_header', $data);
+            $this->load->view('templates/user_sidebar', $data);
+            $this->load->view('templates/user_topbar', $data);
+            $this->load->view('user/news_announcement', $data);
             $this->load->view('templates/user_footer');
         } else {
             redirect('auth');

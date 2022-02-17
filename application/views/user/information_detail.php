@@ -56,7 +56,7 @@
         </div>
 
         <div class="content-detail d-flex w-50 justify-content-between align-content-center align-items-center mx-auto mt-25 position-relative">
-            <label class="text-white" for="">Sponsor</label>
+            <label class="text-white" for="">Recommended</label>
             <div class="line"></div>
             <div class="item text-white"><?= $cart['sponsor'] ?? null; ?></div>
         </div>

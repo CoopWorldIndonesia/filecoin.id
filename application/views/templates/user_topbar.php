@@ -47,7 +47,8 @@
                     if ($this->session->userdata('role_id') == '2') {
                     ?>
                      <li class="nav-item dropdown no-arrow mx-1 list-notification">
-                         <a class="nav-link dropdown-toggle topbar-icon" href="#" id="alertsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                         <a class="nav-link dropdown-toggle topbar-icon" href="<?= base_url('user/news_announcement') ?>">
+                         <!--<a class="nav-link dropdown-toggle topbar-icon" href="#" id="alertsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">-->
                              <!-- <i class="fas fa-bell fa-fw"></i> -->
                              <img src="<?= base_url('assets/img/icon-04.png'); ?>">
                              <!-- Counter - Alerts -->
@@ -104,9 +105,22 @@
                     }
                     ?>
                  <li class="nav-item">
-                     <a class="nav-link topbar-icon" href="<?= base_url('user/customer_service'); ?>" id="#" role="button">
+                     <?php
+                        if($this->session->userdata('role_id') == '2')
+                        {
+                         ?>
+                         <a class="nav-link topbar-icon" href="<?= base_url('user/customer_service'); ?>" id="#" role="button">
+                            <img src="<?= base_url('assets/img/icon-05.png'); ?>">
+                        </a>
+                         <?php
+                        }else{
+                     ?>
+                     <a class="nav-link topbar-icon" href="<?= base_url('admin/message'); ?>" id="#" role="button">
                          <img src="<?= base_url('assets/img/icon-05.png'); ?>">
                      </a>
+                     <?php
+                        }
+                     ?>
                  </li>
 
                  <li class="nav-item">

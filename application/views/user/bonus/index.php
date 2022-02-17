@@ -8,12 +8,12 @@
     <!-- content -->
     <div class="row mt-3">
         <div class="col-md-4 mx-auto">
-            <a href="<?= base_url('user/sponsor'); ?>" class="btn btn-bonus btn-block">Sponsor</a>
+            <a href="<?= base_url('user/sponsor'); ?>" class="btn btn-bonus btn-block">Recommended</a>
         </div>
     </div>
     <div class="row mt-3">
         <div class="col-md-4 mx-auto">
-            <a href="<?= base_url('user/sponsorMatching'); ?>" class="btn btn-bonus btn-block">Sponsor Matching</a>
+            <a href="<?= base_url('user/sponsorMatching'); ?>" class="btn btn-bonus btn-block">Recommended Matching</a>
         </div>
     </div>
     <div class="row mt-3">
@@ -23,7 +23,7 @@
     </div>
     <div class="row mt-3">
         <div class="col-md-4 mx-auto">
-            <a href="<?= base_url('user/miningGenerasi'); ?>" class="btn btn-bonus btn-block">Mining Generasi</a>
+            <a href="<?= base_url('user/miningGenerasi'); ?>" class="btn btn-bonus btn-block">Mining Matching</a>
 
         </div>
     </div>

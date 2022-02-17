@@ -71,7 +71,7 @@
                                     </a>
                                 </td>
                                 <td>
-                                        <?= $row_basecamp->omset." BOX"; ?>  
+                                        <?= !empty($row_basecamp->omset) ? $row_basecamp->omset." BOX" : "0"; ?>  
                                 </td>
                                 <td>
                                     <a href="#" id="<?= $row_basecamp->id; ?>" onclick="event.preventDefault(); open_basecamp(this);">
@@ -117,7 +117,7 @@
                                     <td><?= $row_history->first_name;?></td>
                                     <td><?= $row_history->name;?></td>
                                     <td><?= $row_history->fm;?></td>
-                                    <td><?= $row_history->purchase.' BOX';?></td>
+                                    <td><?= !empty($row_history->purchase) ? $row_history->purchase.' BOX' : '0';?></td>
                                     <td><?= $row_history->bonus;?></td>
                                 </tr>
                                 <?php

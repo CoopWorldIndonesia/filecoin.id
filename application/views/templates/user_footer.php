@@ -54,6 +54,44 @@
          </div>
      </div>
  <?php endif ?>
+ 
+ <?php if (uri_string() != 'user/news_announcement') : ?>
+     <?php if ($this->session->userdata('role_id') == 2) : ?>
+         <?php if ($user['is_news'] == 0) : ?>
+             <div id="modalNews" class="modal fade" data-keyboard="false" data-backdrop="static">
+                 <div class="modal-dialog">
+                     <div class="modal-content">
+                         <div class="modal-header">
+                             <h5 class="modal-title">News Notification!</h5>
+                         </div>
+                         <div class="modal-body mx-auto">
+                             <p>There is a Latest News, Check Immediately!</p>
+                             <a href="<?= base_url('user/news_announcement'); ?>" class="btn btn-info text-center mx-auto w-100">OK</a>
+                         </div>
+                     </div>
+                 </div>
+             </div>
+         <?php endif ?>
+     <?php endif ?>
+ <?php endif ?>
+ 
+ <?php if (!empty($list_notif_order[0])) : ?>
+     <div id="modalDeposit" class="modal fade" data-keyboard="false" data-backdrop="static">
+         <div class="modal-dialog">
+             <div class="modal-content">
+                 <div class="modal-header">
+                     <h5 class="modal-title"><?= $list_notif_order[0]->title ?> Notification!</h5>
+                 </div>
+                 <div class="modal-body mx-auto">
+                     <p><?= $list_notif_order[0]->message; ?></p>
+                     <a class="btn btn-info text-center mx-auto w-100" href="<?= base_url() .  $list_notif_order[0]->link . '/' .  $list_notif_order[0]->id ?>">
+                         OK
+                     </a>
+                 </div>
+             </div>
+         </div>
+     </div>
+ <?php endif; ?>
 
  <div class="showNotif">
 
@@ -132,27 +170,45 @@
         var result      = '#result'+iduser;
         var idresult    = 'result'+iduser;
         var eDisplay    = document.getElementById(idresult);
+        var level       = document.getElementById("sel1").value;
 
         if(eDisplay.className == 'hideNetwork')
         {
-            eDisplay.classList.remove('hideNetwork');
-            eDisplay.classList.add("displayNetwork");
+            if(level == '')
+            {
+                alert('Type limit level first !!!');
+            }
+            else if(level <= 0)
+            {
+                alert('Level must be greater than 0 !!!');
+            }
+            else
+            {
+                eDisplay.classList.remove('hideNetwork');
+                eDisplay.classList.add("displayNetwork");
+                document.getElementById(iduser).innerHTML = '<i class="fas fa-caret-up"></i>';
 
-            $.ajax({
-                type: "POST",
-                url: "<?= base_url();?>admin/showDownline",
-                data: {
-                    user: iduser
-                },
-
-                success: function(data) {
-                    $(result).html(data);
-                },
-                error: function(data) {
-                    alert('error');
-                }
-            });
-            document.getElementById(iduser).innerHTML = '<i class="fas fa-caret-up"></i>';
+                $.ajax({
+                    type: "POST",
+                    url: "<?= base_url();?>admin/showDownline",
+                    data: {
+                        user: iduser, level: level
+                    },
+                    beforeSend: function() {
+                        $('#loader').removeClass('hidden');
+                    },
+                    success: function(data) {
+                        $('#loader').addClass('hidden');
+                        $(result).html(data);
+                    },
+                    error: function(data) {
+                        alert('error');
+                    },
+                    complete: function(){
+                        $('#loader').addClass('hidden');
+                    }
+                });
+            }
 
         }
         else if(eDisplay.className == 'displayNetwork')
@@ -169,28 +225,45 @@
         var result      = '#result'+iduser;
         var idresult    = 'result'+iduser;
         var eDisplay    = document.getElementById(idresult);
+        var level       = document.getElementById("sel1").value;
 
         if(eDisplay.className == 'hideNetwork')
         {
-            eDisplay.classList.remove('hideNetwork');
-            eDisplay.classList.add("displayNetwork");
-
-            $.ajax({
-                type: "POST",
-                url: "<?= base_url();?>user/showDownline",
-                data: {
-                    user: iduser
-                },
-
-                success: function(data) {
-                    $(result).html(data);
-                },
-                error: function(data) {
-                    alert('error');
-                }
-            });
-            document.getElementById(iduser).innerHTML = '<i class="fas fa-caret-up"></i>';
-
+            if(level == '')
+            {
+                alert('Type limit level first !!!');
+            }
+            else if(level <= 0)
+            {
+                alert('Level must be greater than 0 !!!');
+            }
+            else
+            {
+                eDisplay.classList.remove('hideNetwork');
+                eDisplay.classList.add("displayNetwork");
+                document.getElementById(iduser).innerHTML = '<i class="fas fa-caret-up"></i>';
+    
+                $.ajax({
+                    type: "POST",
+                    url: "<?= base_url();?>user/showDownline",
+                    data: {
+                        user: iduser, level: level
+                    },
+                    beforeSend: function() {
+                        $('#loader').removeClass('hidden');
+                    },
+                    success: function(data) {
+                        $('#loader').addClass('hidden');
+                        $(result).html(data);
+                    },
+                    error: function(data) {
+                        alert('Something wrong');
+                    },
+                    complete: function(){
+                        $('#loader').addClass('hidden');
+                    }
+                });
+            }
         }
         else if(eDisplay.className == 'displayNetwork')
         {
@@ -828,10 +901,21 @@
      });
      $(window).on('load', function() {
          var width = $(window).width();
-         if (width <= 480) {
+         if (width <= 820) {
+             if ($.cookie('pop2') != 1) {
+                 $('#modalBanner').on('hidden.bs.modal', function() {
+                     $('#modalBanner2').modal('show');
+                 })
+                 if ($.cookie('pop') == 1) {
+                     $('#modalBanner2').modal('show');
+                 }
+             }
              if ($.cookie('pop') != 1) {
                  $('#modalBanner').modal('show');
              }
+             $(".nothanks2").click(function() {
+                 $.cookie('pop2', '1');
+             });
              $(".nothanks").click(function() {
                  $.cookie('pop', '1');
              });
@@ -871,6 +955,17 @@
      document.querySelectorAll(".link-with-preview").forEach(el => {
          el.addEventListener("mouseover", showLinkPreview);
          el.addEventListener("mouseleave", hideLinkPreview)
+     });
+ </script>
+ 
+ <script>
+     $(document).ready(function() {
+         $("#modalDeposit").modal('show');
+     });
+ </script>
+ <script>
+     $(document).ready(function() {
+         $("#modalNews").modal('show');
      });
  </script>
  </body>

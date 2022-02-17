@@ -5,8 +5,8 @@
     <?= $this->session->flashdata('message'); ?>
 
     <div class="card mb-4 bg-trans bd-none">
-        <div class="card-body">
-            <div class="row mb-4">
+        <div class="card-body pt-0">
+            <div class="row banner-home1">
                 <div id="carousel1" class="carousel slide container-banner" data-ride="carousel">
                     <ol class="carousel-indicators">
                         <?php foreach ($banner1 as $key => $s) : ?>
@@ -34,7 +34,7 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col-lg-2 col-sm-12 mb-4 px-0 banner-home2 pr-3">
+                <div class="col-lg-2 col-sm-12 my-4 px-0 banner-home2 pr-3">
                     <div id="carousel2" class="carousel slide container-banner2" data-ride="carousel">
                         <ol class="carousel-indicators">
                             <?php foreach ($banner2 as $key => $s) : ?>
@@ -62,9 +62,28 @@
 
                 <!-- Market -->
                 <div class="col-lg-10 col-sm-12">
+                    <div class="mt-4 align-items-center announce <?= empty($news_limit) ? 'd-none' : 'd-flex'; ?>">
+                        <div>
+                            <h4 class="mb-0 px-3 border-right title-news font-weight-bold">NEWS</h4>
+                        </div>
+                        <marquee class="h4 mb-0" scrollamount="6">
+                            <?php
+                            $i = 0;
+                            $news_count = count($news_limit) - 2;
+                            foreach ($news_limit as $key => $row) : ?>
+                                <!-- <span><?= date('Y/m/d', $news['datecreate']); ?></span>&nbsp;&nbsp;|&nbsp;&nbsp;<?= $news['title']; ?> -->
+                                <a href="<?= base_url('user/news_announcement/' . $i++); ?>" class="text-decoration-none text-white">
+                                    <span class="px-4"><span style="font-size: 14px !important;"><?= date('Y/m/d', $row->datecreate); ?></span>&nbsp;&nbsp;<?= $row->title; ?></span>
+                                    <?php if ($key <= $news_count) : ?>
+                                        <div class="space-news"></div>
+                                    <?php endif ?>
+                                </a>
+                            <?php endforeach ?>
+                        </marquee>
+                    </div>
                     <div class="row">
                         <div class="col-md-12">
-                            <h4 class="mb-3 text-white my-home-title">Market</h4>
+                            <h4 class="mb-3 mt-4 text-white my-home-title">Market</h4>
                         </div>
                         <div class="col-xl-4 col-md-4 wallet mb-2">
                             <div class="card shadow p-2 card-market-index" style="height:145px">
@@ -363,16 +382,58 @@
         </div>
     </div>
 <?php endif ?>
-<div id="modalBanner" class="modal-banner">
-    <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <!-- <div class="modal-header">
-                <h6 class="modal-title">Modal Banner</h6>
+
+<!-- <div id="modalBanner2" class="modal-banner fade" data-keyboard="false" data-backdrop="static" style="background: rgba(0,0,0,.5)">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content bg-transparent border-0">
+            <div class="modal-header border-bottom-0 p-1">
                 <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">×</span>
+                    <span aria-hidden="true" class="text-white">&times;</span>
                 </button>
-            </div> -->
-            <div class="modal-body">
+            </div>
+            <div class="modal-body p-0">
+                <div id="carousel4" class="carousel slide container-banner" data-ride="carousel">
+                    <ol class="carousel-indicators">
+                        <?php foreach ($banner1 as $key => $s) : ?>
+                            <li data-target="#carousel4" data-slide-to="<?= $key ?>" class=" <?= ($key == 0) ?  'active' : '' ?>">
+                                <img data-target="#carousel4" data-slide-to="<?= $key ?>" class="d-block shadow-img <?= ($key == 0) ?  'active' : '' ?>" src="<?= base_url('assets/photo/banner/' . $s->image) ?>" width="100px" style="" />
+                            </li>
+                        <?php endforeach; ?>
+                    </ol>
+                    <div class="carousel-inner">
+                        <?php foreach ($banner1 as $key => $s) : ?>
+                            <div class=" carousel-item <?= ($key == 0) ?  'active' : '' ?> slide">
+                                <img class="d-block shadow-img img-slide" src="<?= base_url('assets/photo/banner/' . $s->image) ?>" />
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+
+                    <a class="carousel-control-prev" href="#carousel4" role="button" data-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="sr-only">Previous</span>
+                    </a>
+                    <a class="carousel-control-next" href="#carousel4" role="button" data-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="sr-only">Next</span>
+                    </a>
+                </div>
+            </div>
+            <div class="modal-footer d-block mx-auto p-0 border-top-0">
+                <button class="btn btn-sm text-primary font-weight-bold nothanks2" data-dismiss="modal" aria-hidden="true">Don't Show Again</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modalBanner" class="modal-banner fade" data-keyboard="false" data-backdrop="static" style="background: rgba(0,0,0,.5)">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content bg-transparent border-0">
+            <div class="modal-header border-bottom-0 p-1">
+                <button class="close" type="button" data-dismiss="modal" aria-label="Close" style="position: absolute; right:25%; top:-20px">
+                    <span aria-hidden="true" class="text-white">×</span>
+                </button>
+            </div>
+            <div class="modal-body p-0">
                 <div id="carousel3" class="carousel slide container-banner2 mx-auto" data-ride="carousel">
                     <ol class="carousel-indicators">
                         <?php foreach ($banner2 as $key => $s) : ?>
@@ -386,21 +447,11 @@
                             </div>
                         <?php endforeach; ?>
                     </div>
-
-                    <a class="carousel-control-prev" href="#carousel3" role="button" data-slide="prev">
-                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                        <span class="sr-only">Previous</span>
-                    </a>
-                    <a class="carousel-control-next" href="#carousel3" role="button" data-slide="next">
-                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                        <span class="sr-only">Next</span>
-                    </a>
                 </div>
             </div>
-            <div class="modal-footer d-block">
-                <button class="btn float-left nothanks" data-dismiss="modal" aria-hidden="true">Don't Show Again</button>
-                <button class="btn btn-secondary float-right" data-dismiss="modal" aria-hidden="true">Close</button>
+            <div class="modal-footer p-0 d-block mx-auto border-top-0">
+                <button class="btn btn-sm text-primary font-weight-bold nothanks" data-dismiss="modal" aria-hidden="true">Don't Show Again</button>
             </div>
         </div>
     </div>
-</div>
+</div> -->

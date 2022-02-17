@@ -2,7 +2,7 @@
 <div class="container-fluid">
 
     <!-- Page Heading -->
-    <h1 class="h3 mb-4 text-white">Package Purchase</h1>
+    <h1 class="h3 mb-4 text-white">Bonus Global</h1>
 
     <?= $this->session->flashdata('message'); ?>
 
@@ -18,9 +18,8 @@
                         <tr>
                             <th>Year</th>
                             <th>Month</th>
+                            <th>Omset</th>
                             <th>Total Purchase</th>
-                            <th>MTM</th>
-                            <th>BOX</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -28,10 +27,9 @@
                             $omset_fil = $row_purchase->total_fil + ($row_purchase->total_mtm / 4) + ($row_purchase->total_zenx / 12); ?>
                             <tr>
                                 <td><?= $row_purchase->year; ?></td>
-                                <td><a style="color:#858796;" href="<?= base_url('admin/detailMonth/' . $row_purchase->year . '/' . $row_purchase->month) ?>"><?= date("F", mktime(0, 0, 0, $row_purchase->month, 10));  ?></a></td>
-                                <td><?= $omset_fil; ?> FIL</td>
-                                <td><?= $omset_fil * 4; ?> MTM</td>
-                                <td><?= $row_purchase->total_box; ?> BOX</td>
+                                <td><a href="<?= base_url('admin/detailMonth/' . $row_purchase->year . '/' . $row_purchase->month) ?>"><?= date("F", mktime(0, 0, 0, $row_purchase->month, 10));  ?></a></td>
+                                <td><?= !empty($row_purchase->total_box) ? $row_purchase->total_box." BOX" : '0'; ?> </td>
+                                <td><?= !empty($omset_fil) ? $omset_fil . " FIL" : '0'; ?> </td>
                             </tr>
                         <?php } ?>
                     </tbody>

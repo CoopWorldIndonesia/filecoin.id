@@ -8,6 +8,14 @@ $(document).ready(function () {
 });
 
 $(document).ready(function () {
+  $('#dataTable2').DataTable({
+    "searching": true,
+    "order": [[0, "desc"]],
+    "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]]
+  });
+});
+
+$(document).ready(function () {
   $('#tablenotorder').DataTable({
     "searching": true,
     "lengthMenu": [[-1, 10, 25, 50], ["All", 10, 25, 50]],

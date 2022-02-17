@@ -2,7 +2,7 @@
 <div class="container-fluid">
 
     <!-- Page Heading -->
-    <h1 class="h3 mb-4 text-white my-home-title">MINING GENERASI</h1>
+    <h1 class="h3 mb-4 text-white my-home-title">MINING MATCHING</h1>
 
     <!-- DataTales Example -->
     <!-- <div class="card shadow mb-4"> -->

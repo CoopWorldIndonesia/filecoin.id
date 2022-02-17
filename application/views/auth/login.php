@@ -59,7 +59,7 @@
                                 </div>
                                 <div class="p-2">
                                     <h1 class="h4 text-white mb-1">IPFS.CO.ID</h1>
-                                    <p class="text-white">Hello, Welcome to MTM</p>
+                                    <p class="text-white">Hello, Welcome</p>
                                 </div>
                             </div>
                         </div>

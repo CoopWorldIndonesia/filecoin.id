@@ -55,13 +55,13 @@
                     ?>
 
                         <div class="form-group">
-                            <label class="text-white mb-1" for="sponsor">Sponsor</label>
-                            <input type="text" class="form-control" id="sponsor" name="sponsor" value="<?= set_value('sponsor'); ?>" placeholder="Sponsor">
+                            <label class="text-white mb-1" for="sponsor">Recommended</label>
+                            <input type="text" class="form-control" id="sponsor" name="sponsor" value="<?= set_value('sponsor'); ?>" placeholder="Recommended ID">
                             <?= form_error('sponsor', '<p><small class="text-danger pt-1">', '</small></p>'); ?>
                         </div>
                         <div class="form-group">
                             <label class="text-white mb-1" for="position">Position</label>
-                            <input type="text" class="form-control" id="position" name="position" value="<?= set_value('position'); ?>" placeholder="Position">
+                            <input type="text" class="form-control" id="position" name="position" value="<?= set_value('position'); ?>" placeholder="Position ID">
                             <?= form_error('position', '<p><small class="text-danger pt-1">', '</small></p>'); ?>
                         </div>
 

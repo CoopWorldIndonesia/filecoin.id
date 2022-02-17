@@ -353,11 +353,12 @@ class M_user extends CI_Model
     
     public function get_bonus_basecamp($id)
     {
-        return $this->db->select('user.username, bonus_basecamp.update_date, bonus_basecamp.cart_id, bonus_basecamp.team, bonus_basecamp.filecoin, bonus_basecamp.mtm, bonus_basecamp.type, package.name')
+        return $this->db->select('user.username, basecamp_name.name AS bs_name, bonus_basecamp.update_date, bonus_basecamp.cart_id, bonus_basecamp.team, bonus_basecamp.filecoin, bonus_basecamp.mtm, bonus_basecamp.type, package.name')
             ->from('bonus_basecamp')
             ->join('cart', 'bonus_basecamp.cart_id = cart.id')
             ->join('user', 'cart.user_id = user.id')
             ->join('package', 'package.id = cart.package_id')
+            ->join('basecamp_name', 'bonus_basecamp.id_bs = basecamp_name.id', 'left')
             ->where(['bonus_basecamp.user_id' => $id, 'status' => '1', 'bonus_basecamp.mtm !=' => '0'])
             ->order_by('bonus_basecamp.update_date', 'DESC')
             ->get()->result();
@@ -906,7 +907,7 @@ class M_user extends CI_Model
 
     public function get_mining_user($date)
     {
-        return $this->db->select('user.username, package.name, package.daysmining, cart.id, cart.datecreate , cart.pause_min')
+       return $this->db->select('user.username, package.name, package.daysmining, cart.id, cart.datecreate , cart.pause_min, cart.update_date')
             ->from('cart')
             ->join('package', 'package.id = cart.package_id')
             ->join('user', 'user.id = cart.user_id')
@@ -1152,6 +1153,7 @@ class M_user extends CI_Model
     //         ->group_by(['YEAR(DATE_FORMAT(FROM_UNIXTIME(cart.datecreate), "%Y-%m-%d"))', 'MONTH(DATE_FORMAT(FROM_UNIXTIME(cart.datecreate), "%Y-%m-%d"))'])
     //         ->get();
     // }
+    
     public function get_purchase_admin()
     {
         return $this->db->select('YEAR(DATE_FORMAT(FROM_UNIXTIME(cart.datecreate), "%Y-%m-%d")) AS year, MONTH(DATE_FORMAT(FROM_UNIXTIME(cart.datecreate), "%Y-%m-%d")) AS month, SUM(cart.fill) AS total_fil, SUM(cart.mtm) AS total_mtm, SUM(cart.zenx) AS total_zenx, SUM(package.point) AS total_box')
@@ -1162,6 +1164,15 @@ class M_user extends CI_Model
             ->group_by(['YEAR(DATE_FORMAT(FROM_UNIXTIME(cart.datecreate), "%Y-%m-%d"))', 'MONTH(DATE_FORMAT(FROM_UNIXTIME(cart.datecreate), "%Y-%m-%d"))'])
             ->get();
     }
+    
+    public function count_fm_bymonth_now($date, $fm)
+    {
+        return $this->db->select('*')
+                        ->from('level_fm')
+                        ->where(['level_fm.fm' => $fm, 'FROM_UNIXTIME(level_fm.update_date, "%Y-%m-%d") <=' => $date])
+                        ->count_all_results();
+    }
+    
     public function get_listpurchase_admin($date)
     {
         return $this->db->select('cart.update_date, user.username, package.name, cart.fill, cart.mtm, cart.zenx')
@@ -1175,6 +1186,16 @@ class M_user extends CI_Model
 
     public function get_user_level($level)
     {
+        return $this->db->select('user.id, user.username, level_fm.fm')
+            ->from('user')
+            ->join('level_fm', 'level_fm.user_id = user.id')
+            ->where('level_fm.fm', $level)
+            ->order_by('level_fm.fm', 'DESC')
+            ->get();
+    }
+
+    public function get_user_level2($level)
+    {
         return $this->db->select('user.*, level_fm.fm, cart.user_id, cart.sponsor_id, cart.position_id, cart.update_date, SUM(package.point) AS name')
             ->from('user')
             ->join('level_fm', 'level_fm.user_id = user.id', 'left outer')
@@ -1185,6 +1206,7 @@ class M_user extends CI_Model
             ->group_by('user.id')
             ->get();
     }
+    
     public function get_level_month($level, $date)
     {
         return $this->db->select('user_id, mtm, COUNT(level_fm) AS total')
@@ -1194,12 +1216,13 @@ class M_user extends CI_Model
             ->where('from_unixtime(datecreate, "%Y-%m") = "' . $date . '"')
             ->get()->row_array();
     }
+
     public function get_level_month2($level, $date)
     {
         return $this->db->select('user_id, mtm, COUNT(level_fm) AS total')
             ->from('excess_bonus')
             ->where('level_fm', $level)
-            ->where('type_bonus', 5)
+            ->where('note', 'bonus global')
             ->where('mtm !=', 0)
             ->where('from_unixtime(datecreate, "%Y-%m") = "' . $date . '"')
             ->get()->row_array();
@@ -1207,20 +1230,18 @@ class M_user extends CI_Model
 
     public function get_today_purchase($date)
     {
-        return $this->db->select_sum('package.fil')
-            ->from('cart')
-            ->join('package', 'package.id = cart.package_id')
-            ->where(["cart.is_payment" => "1", "FROM_UNIXTIME(cart.datecreate, '%Y-%m-%d') = " => $date])
-            ->get()->row_array();
+        return $this->db->select('SUM(cart.fill) as fill, SUM(cart.mtm) as mtm, SUM(cart.zenx) as zenx')
+                        ->from('cart')
+                        ->where(["cart.is_payment" => "1", "FROM_UNIXTIME(cart.datecreate, '%Y-%m-%d') = " => $date])
+                        ->get()->row_array();
     }
 
     public function get_currentmonth_purchase($monthNow)
     {
-        return $this->db->select_sum('package.fil')
-            ->from('cart')
-            ->join('package', 'package.id = cart.package_id')
-            ->where(['cart.is_payment' => '1', 'MONTH(DATE_FORMAT(FROM_UNIXTIME(cart.datecreate), "%Y-%m-%d")) = ' => $monthNow])
-            ->get()->row_array();
+        return $this->db->select('SUM(cart.fill) as fill, SUM(cart.mtm) as mtm, SUM(cart.zenx) as zenx')
+                        ->from('cart')
+                        ->where(['cart.is_payment' => '1', 'FROM_UNIXTIME(cart.datecreate, "%Y-%m") = ' => $monthNow])
+                        ->get()->row_array();
     }
 
     public function get_today_purchase_basecamp($date, $basecamp)
@@ -1236,6 +1257,25 @@ class M_user extends CI_Model
     public function get_current_purchase_basecamp($month, $basecamp)
     {
         return $this->db->select_sum('package.fil')
+            ->from('cart')
+            ->join('package', 'package.id = cart.package_id')
+            ->join('user', 'user.id = cart.user_id')
+            ->where(['cart.is_payment' => '1', 'MONTH(DATE_FORMAT(FROM_UNIXTIME(cart.datecreate), "%Y-%m-%d")) = ' => $month, 'user.basecamp LIKE' => $basecamp])
+            ->get()->row_array();
+    }
+
+    public function get_today_purchasebox_basecamp($date, $basecamp)
+    {
+        return $this->db->select_sum('package.point')
+            ->from('cart')
+            ->join('package', 'package.id = cart.package_id')
+            ->join('user', 'user.id = cart.user_id')
+            ->where(['cart.is_payment' => '1', 'FROM_UNIXTIME(cart.datecreate, "%Y-%m-%d") =' => $date, 'user.basecamp LIKE' => $basecamp])
+            ->get()->row_array();
+    }
+    public function get_current_purchasebox_basecamp($month, $basecamp)
+    {
+        return $this->db->select_sum('package.point')
             ->from('cart')
             ->join('package', 'package.id = cart.package_id')
             ->join('user', 'user.id = cart.user_id')
@@ -1823,26 +1863,28 @@ class M_user extends CI_Model
                         ->get()->row_array();
     }
     
+    public function get_total_basecampbox_byid($userid)
+    {
+        return $this->db->select_sum('package.point')
+            ->from('bonus_basecamp')
+            ->join('cart', 'bonus_basecamp.cart_id = cart.id')
+            ->join('package', 'package.id = cart.package_id')
+            ->where(['bonus_basecamp.user_id' => $userid, 'bonus_basecamp.status' => 1])
+            ->get()->row_array();
+    }
+    
     public function get_basecamp_leader()
     {
-        return $this->db->select('basecamp_name.id, basecamp_name.name, user.id as userid, user.username, (SELECT sum(package.point) FROM cart JOIN package ON cart.package_id = package.id JOIN user as a ON a.id = cart.user_id WHERE cart.is_payment = 1 AND a.id_basecamp = basecamp_name.id) omset, (SELECT sum(bonus_basecamp.mtm) FROM bonus_basecamp WHERE bonus_basecamp.id_bs = basecamp_name.id and bonus_basecamp.user_id = user.id) bonus, (SELECT sum(excess_bonus.mtm) FROM excess_bonus WHERE excess_bonus.user_id = user.id AND excess_bonus.note = "bonus basecamp") excess')
+        return $this->db->select('basecamp_name.id, basecamp_name.name, user.id as userid, user.username, 
+                                (SELECT sum(package.point) FROM cart JOIN package ON cart.package_id = package.id JOIN user as a ON a.id = cart.user_id WHERE cart.is_payment = 1 AND a.id_basecamp = basecamp_name.id AND cart.user_id != user.id) omset, 
+                                (SELECT sum(bonus_basecamp.mtm) FROM bonus_basecamp WHERE bonus_basecamp.id_bs = basecamp_name.id and bonus_basecamp.user_id = user.id) bonus, (SELECT sum(excess_bonus.mtm) FROM excess_bonus WHERE excess_bonus.user_id = user.id AND excess_bonus.note = "bonus basecamp") excess')
                         ->from('basecamp_name')
                         ->join('basecamp_leader', 'basecamp_leader.id_bs = basecamp_name.id')
                         ->join('user', 'user.id = basecamp_leader.user_id')
                         ->get()->result();
     }
     
-    public function get_history_bonus_basecamp()
-    {
-        return $this->db->select('sum(bonus_basecamp.mtm) as bonus, basecamp_name.name, user.username, user.first_name, level_fm.fm, user.id, (SELECT SUM(package.point) FROM cart JOIN package ON package.id = cart.package_id WHERE cart.user_id = user.id) purchase')
-                        ->from('bonus_basecamp')
-                        ->join('user', 'user.id = bonus_basecamp.user_id')
-                        ->join('level_fm', 'level_fm.user_id = user.id')
-                        ->join('basecamp_name', 'basecamp_name.id = bonus_basecamp.id_bs')
-                        ->where('bonus_basecamp.status', 1)
-                        ->group_by('bonus_basecamp.user_id')
-                        ->get()->result();
-    }
+    
     
     //insert last id
     public function last_id($table, $data)
@@ -1853,9 +1895,9 @@ class M_user extends CI_Model
     
    public function get_userlist_basecamp($id)
     {
-        return $this->db->select('cart.datecreate, user.id, user.username, user.first_name, user.phone, level_fm.fm, package.name,
-                                (SELECT b.username from cart as a join user as b ON b.id = a.sponsor_id WHERE a.user_id = user.id and a.sponsor_id != 0 group by a.user_id) sponsor,
-                                (SELECT d.username from cart as c JOIN user as d ON d.id = c.position_id WHERE c.user_id = user.id and c.position_id != 0 group by c.user_id) position')
+        return $this->db->select('cart.datecreate, user.id, user.username, user.first_name, user.country_code, user.phone, level_fm.fm, package.name,
+                                (SELECT b.username from cart as a join user as b ON b.id = a.sponsor_id WHERE a.user_id = user.id and a.sponsor_id != 0 group by b.id) sponsor,
+                                (SELECT d.username from cart as c JOIN user as d ON d.id = c.position_id WHERE c.user_id = user.id and c.position_id != 0 GROUP BY user.id) position')
                         ->from('user')
                         ->join('level_fm', 'level_fm.user_id = user.id')
                         ->join('cart', 'cart.user_id = user.id')
@@ -1905,15 +1947,7 @@ class M_user extends CI_Model
                         ->get()->result();
     }
     
-    public function get_omset_bybasecamp_excess($id_bs, $iduser)
-    {
-        return $this->db->select('excess_bonus.datecreate, user.username, basecamp_name.name, (SELECT b.username from cart as a JOIN user as b on b.id = a.user_id WHERE a.id = excess_bonus.cart_id) member, (SELECT d.name from cart as c JOIN package as d on d.id = c.package_id WHERE c.id = excess_bonus.cart_id) purchase, excess_bonus.mtm')
-                        ->from('excess_bonus')
-                        ->join('user', 'user.id = excess_bonus.user_id')
-                        ->join('basecamp_name', 'basecamp_name.id = excess_bonus.id')
-                        ->where(['excess_bonus.id_bs' => $id_bs, 'excess_bonus.user_id' => $iduser, 'excess_bonus.mtm !=' =>'0', 'excess_bonus.note' => 'bonus basecamp'])
-                        ->get()->result();
-    }
+    
     
     public function get_basecampid_byuser($id)
     {
@@ -1929,5 +1963,308 @@ class M_user extends CI_Model
                         ->from('basecamp_leader')
                         ->where('basecamp_leader.id_bs', $id)
                         ->get()->row_array();
+    }
+    
+    public function get_level_byfm_monthnow($date, $level)
+    {
+        return $this->db->select('cart.update_date, user.id, user.username, user.first_name, user.country_code, user.phone, package.name, 
+                                (SELECT b.id from cart as a join user as b ON b.id = a.sponsor_id WHERE a.user_id = user.id and a.sponsor_id != 0) sponsor_id,
+                                (SELECT b.username from cart as a join user as b ON b.id = a.sponsor_id WHERE a.user_id = user.id and a.sponsor_id != 0) sponsor, 
+                                (SELECT d.id from cart as c JOIN user as d ON d.id = c.position_id WHERE c.user_id = user.id and c.position_id != 0) position_id,
+                                (SELECT d.username from cart as c JOIN user as d ON d.id = c.position_id WHERE c.user_id = user.id and c.position_id != 0) position, 
+                                level_fm.fm as level_fm')
+                        ->from('user')
+                        ->join('cart', 'cart.user_id = user.id')
+                        ->join('package', 'package.id = cart.package_id')
+                        ->join('level_fm', 'level_fm.user_id = user.id')
+                        ->where_in('level_fm.fm', $level)
+                        ->where('from_unixtime(level_fm.update_date, "%Y-%m-%d") <=', $date)
+                        ->get()->result();
+    }
+    
+    public function get_global_fm_bymonth($date, $level)
+    {
+        return $this->db->select('cart.update_date, user.id, user.username, user.first_name, user.country_code, user.phone, package.name, 
+                                (SELECT b.id from cart as a join user as b ON b.id = a.sponsor_id WHERE a.user_id = user.id and a.sponsor_id != 0) sponsor_id,
+                                (SELECT b.username from cart as a join user as b ON b.id = a.sponsor_id WHERE a.user_id = user.id and a.sponsor_id != 0) sponsor, 
+                                (SELECT d.id from cart as c JOIN user as d ON d.id = c.position_id WHERE c.user_id = user.id and c.position_id != 0) position_id,
+                                (SELECT d.username from cart as c JOIN user as d ON d.id = c.position_id WHERE c.user_id = user.id and c.position_id != 0) position, 
+                                bonus_global.level_fm')
+                        ->from('user')
+                        ->join('cart', 'cart.user_id = user.id')
+                        ->join('package', 'package.id = cart.package_id')
+                        ->join('bonus_global', 'bonus_global.user_id = user.id')
+                        ->where(['from_unixtime(bonus_global.datecreate, "%Y-%m") =' => $date, 'bonus_global.mtm != ' => '0', 'bonus_global.level_fm' => $level])
+                        ->get()->result();
+    }
+    
+    public function get_excessglobal_fm_bymonth($date, $level)
+    {
+        return $this->db->select('cart.update_date, user.id, user.username, user.first_name, user.country_code, user.phone, package.name, 
+                                (SELECT b.id from cart as a join user as b ON b.id = a.sponsor_id WHERE a.user_id = user.id and a.sponsor_id != 0) sponsor_id,
+                                (SELECT b.username from cart as a join user as b ON b.id = a.sponsor_id WHERE a.user_id = user.id and a.sponsor_id != 0) sponsor, 
+                                (SELECT d.id from cart as c JOIN user as d ON d.id = c.position_id WHERE c.user_id = user.id and c.position_id != 0) position_id,
+                                (SELECT d.username from cart as c JOIN user as d ON d.id = c.position_id WHERE c.user_id = user.id and c.position_id != 0) position, 
+                                excess_bonus.level_fm')
+                        ->from('user')
+                        ->join('cart', 'cart.user_id = user.id')
+                        ->join('package', 'package.id = cart.package_id')
+                        ->join('excess_bonus', 'excess_bonus.user_id = user.id')
+                        ->where(['from_unixtime(excess_bonus.datecreate, "%Y-%m") =' => $date, 'excess_bonus.mtm !=' => '0', 'excess_bonus.level_fm' => $level, 'excess_bonus.note' => 'bonus global'])
+                        ->get()->result();
+    }
+    
+    public function get_history_bonus_basecamp()
+    {
+        return $this->db->select('sum(bonus_basecamp.mtm) as bonus, basecamp_name.name, user.username, user.first_name, level_fm.fm, user.id, (SELECT SUM(package.point) FROM cart JOIN package ON package.id = cart.package_id WHERE cart.user_id = user.id) purchase')
+                        ->from('bonus_basecamp')
+                        ->join('user', 'user.id = bonus_basecamp.user_id')
+                        ->join('level_fm', 'level_fm.user_id = user.id')
+                        ->join('basecamp_name', 'basecamp_name.id = bonus_basecamp.id_bs')
+                        ->where('bonus_basecamp.status', 1)
+                        ->group_by('bonus_basecamp.user_id')
+                        ->get()->result();
+    }
+    
+    public function get_omset_bybasecamp_excess($id_bs, $iduser)
+    {
+        return $this->db->select('excess_bonus.datecreate, user.username, basecamp_name.name, (SELECT b.username from cart as a JOIN user as b on b.id = a.user_id WHERE a.id = excess_bonus.cart_id) member, (SELECT d.name from cart as c JOIN package as d on d.id = c.package_id WHERE c.id = excess_bonus.cart_id) purchase, excess_bonus.mtm')
+                        ->from('excess_bonus')
+                        ->join('user', 'user.id = excess_bonus.user_id')
+                        ->join('basecamp_name', 'basecamp_name.id = excess_bonus.id')
+                        ->where(['excess_bonus.id_bs' => $id_bs, 'excess_bonus.user_id' => $iduser, 'excess_bonus.mtm !=' =>'0', 'excess_bonus.note' => 'bonus basecamp'])
+                        ->get()->result();
+    }
+    
+    public function get_globalbonus_bymonth_level($date, $level)
+    {
+        return $this->db->select_sum('mtm')
+                        ->from('bonus_global')
+                        ->where(['from_unixtime(datecreate, "%Y-%m") = ' => $date, 'level_fm' => $level])
+                        ->get()->row_array();
+    }
+    
+    public function get_excessglobal_bymonth_level($date, $level)
+    {
+        return $this->db->select_sum('mtm')
+                        ->from('excess_bonus')
+                        ->where(['from_unixtime(datecreate, "%Y-%m") = ' => $date, 'level_fm' => $level, 'note' => 'bonus global'])
+                        ->get()->row_array();
+    }
+    
+    public function get_purchase_admin_bymonth($date)
+    {
+        return $this->db->select('SUM(cart.fill) AS total_fil, SUM(cart.mtm) AS total_mtm, SUM(cart.zenx) AS total_zenx, SUM(package.point) AS total_box')
+                        ->from('cart')
+                        ->join('user', 'user.id = cart.user_id')
+                        ->join('package', 'package.id = cart.package_id')
+                        ->where(['cart.is_payment' => '1', 'FROM_UNIXTIME(cart.datecreate, "%Y-%m") =' => $date])
+                        ->get()->row_array();
+    }
+    
+    public function get_excess_sponsor($id)
+    {
+        return $this->db->select('excess_bonus.datecreate, user.username, excess_bonus.mtm')
+            ->from('excess_bonus')
+            ->join('cart', 'excess_bonus.cart_id = cart.id')
+            ->join('user', 'cart.user_id = user.id')
+            ->where('excess_bonus.user_id', $id)
+            ->where('excess_bonus.note', 'bonus sponsor')
+            ->where('excess_bonus.mtm !=', 0)
+            ->order_by('excess_bonus.datecreate', 'DESC')
+            ->get()->result();
+    }
+
+    public function get_excess_sponsor_matching($id)
+    {
+        return $this->db->select('excess_bonus.datecreate, user.username, excess_bonus.mtm')
+            ->from('excess_bonus')
+            ->join('cart', 'excess_bonus.cart_id = cart.id')
+            ->join('user', 'cart.user_id = user.id')
+            ->where('excess_bonus.user_id', $id)
+            ->where('excess_bonus.note', 'bonus sponsor matching')
+            ->where('excess_bonus.mtm !=', 0)
+            ->order_by('excess_bonus.datecreate', 'DESC')
+            ->get()->result();
+    }
+
+    public function get_excess_global($id)
+    {
+        return $this->db->select('excess_bonus.id, user.username, excess_bonus.mtm, excess_bonus.level_fm, excess_bonus.datecreate, excess_bonus.note_level')
+            ->from('excess_bonus')
+            ->join('user', 'excess_bonus.user_id = user.id')
+            ->where('excess_bonus.user_id', $id)
+            ->where('excess_bonus.note', 'bonus global')
+            ->where('excess_bonus.mtm !=', 0)
+            ->order_by('excess_bonus.datecreate', 'DESC')
+            ->get()->result();
+    }
+
+    public function get_total_excess_byid($userid, $note)
+    {
+        return $this->db->select_sum('mtm')
+            ->from('excess_bonus')
+            ->where('user_id', $userid)
+            ->where('note', $note)
+            ->get()->row_array();
+    }
+    
+    public function get_total_excess_pairing_byid($userid)
+    {
+        return $this->db->select_sum('mtm')
+                        ->from('excess_bonus')
+                        ->where(['user_id' => $userid, 'note' => 'bonus pairing'])
+                        ->get()->row_array();
+    }
+
+    public function get_excess_binarymatch($id)
+    {
+        return $this->db->select('excess_bonus.id, user.username, excess_bonus.generation, excess_bonus.mtm, excess_bonus.datecreate')
+                        ->from('excess_bonus')
+                        ->join('user', 'user.id = excess_bonus.user_id')
+                        ->where(['excess_bonus.user_id' => $id, 'excess_bonus.note' => 'bonus pairing matching'])
+                        ->order_by('excess_bonus.datecreate', 'DESC')
+                        ->get()->result();
+    }
+
+    public function get_total_excess_pairingmatch_byid($userid)
+    {
+        return $this->db->select_sum('mtm')
+                        ->from('excess_bonus')
+                        ->where(['user_id' => $userid, 'note' => 'bonus pairing matching'])
+                        ->get()->row_array();
+    }
+
+    public function get_excess_basecamp($id)
+    {
+        return $this->db->select('user.username, excess_bonus.datecreate, excess_bonus.cart_id, excess_bonus.mtm, basecamp_name.name AS bs_name, package.name')
+            ->from('excess_bonus')
+            ->join('cart', 'excess_bonus.cart_id = cart.id')
+            ->join('user', 'cart.user_id = user.id')
+            ->join('package', 'package.id = cart.package_id')
+            ->join('basecamp_name', 'basecamp_name.id = excess_bonus.id_bs', 'left')
+            ->where(['excess_bonus.user_id' => $id, 'excess_bonus.mtm !=' => '0', 'excess_bonus.note' => 'bonus basecamp'])
+            ->order_by('excess_bonus.datecreate', 'DESC')
+            ->get()->result();
+    }
+
+    public function get_total_excess_basecamp_byid($userid)
+    {
+        return $this->db->select_sum('mtm')
+                        ->from('excess_bonus')
+                        ->where(['user_id' => $userid, 'note' => 'bonus basecamp'])
+                        ->get()->row_array();
+    }
+    
+    public function get_total_collected_basecamp_byid($userid)
+    {
+        return $this->db->select_sum('mtm')
+            ->from('bonus_basecamp')
+            ->where(['user_id' => $userid, 'status' => 0])
+            ->get()->row_array();
+    }
+    public function get_total_collectedbox_basecamp_byid($userid)
+    {
+        return $this->db->select_sum('package.point')
+            ->from('bonus_basecamp')
+            ->join('cart', 'bonus_basecamp.cart_id = cart.id')
+            ->join('package', 'package.id = cart.package_id')
+            ->where(['bonus_basecamp.user_id' => $userid, 'bonus_basecamp.status' => 0])
+            ->get()->row_array();
+    }
+
+    public function get_collected_basecamp($iduser)
+    {
+        return $this->db->select('bonus_basecamp.datecreate, user.username, basecamp_name.name AS bs_name, bonus_basecamp.cart_id, bonus_basecamp.team, (SELECT b.username from cart as a JOIN user as b on b.id = a.user_id WHERE a.id = bonus_basecamp.cart_id) member, (SELECT d.name from cart as c JOIN package as d on d.id = c.package_id WHERE c.id = bonus_basecamp.cart_id) purchase, bonus_basecamp.mtm')
+            ->from('bonus_basecamp')
+            ->join('user', 'user.id = bonus_basecamp.user_id')
+            ->join('basecamp_name', 'basecamp_name.id = bonus_basecamp.id_bs', 'left')
+            ->where(['bonus_basecamp.user_id' => $iduser, 'bonus_basecamp.mtm !=' => '0', 'bonus_basecamp.status' => '0'])
+            ->order_by('bonus_basecamp.datecreate', 'DESC')
+            ->get()->result();
+    }
+    
+    public function get_excess_pairing($id)
+    {
+        return $this->db->select('excess_bonus.id, user.username, excess_bonus.mtm, excess_bonus.datecreate')
+                        ->from('excess_bonus')
+                        ->join('user', 'user.id = excess_bonus.user_id')
+                        ->where(['excess_bonus.note' => 'bonus pairing', 'excess_bonus.user_id' => $id, 'excess_bonus.mtm !=' => '0'])
+                        ->order_by('excess_bonus.datecreate', 'DESC')
+                        ->get()->result();
+    }
+    
+    public function get_level_monthnow_user($date, $level)
+    {
+        return $this->db->select('user.first_name, (SELECT SUM(package.point) FROM cart JOIN package ON cart.package_id = package.id WHERE cart.user_id = user.id) package, level_fm.fm as level_fm')
+                        ->from('user')
+                        ->join('level_fm', 'level_fm.user_id = user.id')
+                        ->where_in('level_fm.fm', $level)
+                        ->where('from_unixtime(level_fm.update_date, "%Y-%m-%d") <=', $date)
+                        ->get()->result();
+    }
+    
+    public function get_user_global_limitdate($date)
+    {
+        $level_array = array('FM4', 'FM5', 'FM6', 'FM7', 'FM8', 'FM9', 'FM10');
+
+        return $this->db->select('user.id, level_fm.fm')
+            ->from('user')
+            ->join('level_fm', 'level_fm.user_id = user.id')
+            ->where_in('level_fm.fm', $level_array)
+            ->where('from_unixtime(level_fm.update_date, "%Y-%m-%d") <=', $date)
+            ->get();
+    }
+    
+    public function show_newnotif_byuser_order($userid)
+    {
+        return $this->db->select('*')
+            ->from('notifi')
+            ->where(['user_id' => $userid, 'is_show' => 0])
+            ->order_by('id', 'DESC')
+            ->limit(5, 0)
+            ->get()->result();
+    }
+    
+    public function get_all_news()
+    {
+        return $this->db->select('*')
+            ->from('news_announce')
+            ->order_by('datecreate', 'DESC')
+            ->get();
+    }
+    
+    public function get_all_news_limit()
+    {
+        return $this->db->select('*')
+            ->from('news_announce')
+            ->order_by('datecreate', 'DESC')
+            ->limit(5, 0)
+            ->get();
+    }
+    
+    public function show_one_data($table, $column, $id)
+    {
+        return $this->db->select('*')
+                        ->from($table)
+                        ->where($column, $id)
+                        ->get()->result();
+    }
+
+    public function get_data_byid_order($table, $column1, $order, $column2, $data)
+    {
+        return $this->db->select('*')
+                        ->from($table)
+                        ->where($column2, $data)
+                        ->order_by($column1, $order)
+                        ->get()->result();
+    }
+    
+    public function show_all_data($table, $order)
+    {
+        return $this->db->select('*')
+                        ->from($table)
+                        ->order_by('id', $order)
+                        ->get()->result();
     }
 }

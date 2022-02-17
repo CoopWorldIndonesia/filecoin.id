@@ -112,7 +112,7 @@
     <li class="nav-item <?= $this->uri->segment(2) == 'sponsornet' ? 'active' : '' ?>">
         <a class="nav-link" href="<?= base_url('user/sponsornet'); ?>">
             <img src="<?= base_url('assets/img/icon-14.png'); ?>" width="15px">&nbsp;
-            <span>Sponsor</span></a>
+            <span>Recommended</span></a>
     </li>
 
     <!-- Nav Item - My Team -->

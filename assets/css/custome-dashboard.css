@@ -5,6 +5,45 @@ body {
 	background-size: cover !important;
 }
 
+/*loading*/
+.lds-dual-ring.hidden {
+	display: none;
+}
+
+.lds-dual-ring img {
+	margin: 25% auto;
+	width: 80px;
+	height: 80px;
+}
+
+.overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100vh;
+	background: rgba(0, 0, 0, .8);
+	z-index: 999;
+	opacity: 1;
+	transition: all 0.5s;
+}
+
+.term-condition .form-control,
+.network-level input {
+	color: #fff !important;
+	background-color: transparent !important;
+}
+
+.tb-global-detail .subhead {
+	background: #3d64d2;
+	color: #fff;
+}
+
+.tb-global-detail .head {
+	background: #213540;
+	color: #fff;
+}
+
 .ui-datepicker-calendar {
 	display: none !important;
 }

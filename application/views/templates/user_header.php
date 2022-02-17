@@ -30,6 +30,8 @@
 </head>
 
 <body id="page-top">
-
+    <div id="loader" class="lds-dual-ring hidden overlay text-center">
+        <img src="<?= base_url('assets/img/loader.gif'); ?>"> 
+    </div>
     <!-- Page Wrapper -->
     <div id="wrapper">

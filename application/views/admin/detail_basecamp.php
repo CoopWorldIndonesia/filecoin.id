@@ -34,7 +34,7 @@
                                     <td><?= date('Y/m/d H:i:s', $row_list->datecreate); ?></td>
                                     <td><?= $row_list->username; ?></td>
                                     <td><?= $row_list->first_name; ?></td>
-                                    <td><?= $row_list->phone; ?></td>
+                                    <td><?= '+'.$row_list->country_code.$row_list->phone; ?></td>
                                     <td><?= $row_list->name; ?></td>
                                     <td><?= $row_list->fm; ?></td>
                                     <td><?= $row_list->sponsor; ?></td>

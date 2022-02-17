@@ -394,6 +394,7 @@ class Auth extends CI_Controller
         $this->session->unset_userdata('cart');
         $this->session->unset_userdata('language');
         setcookie('pop', '0', 'filecoin.id', '/');
+        setcookie('pop2', '0', 'filecoin.id', '/');
 
         $this->session->set_flashdata('message', '<div class="alert alert-info" role="alert">You have been logged out!</div>');
         redirect('auth');

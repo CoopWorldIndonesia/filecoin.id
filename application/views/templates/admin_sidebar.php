@@ -20,6 +20,12 @@
             <i class="fas fa-home"></i>
             <span>My Home</span></a>
     </li>
+    
+    <li class="nav-item <?= uri_string() == 'admin/news_announcement' ? 'active' : '' ?>">
+        <a class="nav-link" href="<?= base_url('admin/news_announcement'); ?>">
+            <i class="fas fa-newspaper"></i>
+            <span>News</span></a>
+    </li>
 
     <li class="nav-item <?= uri_string() == 'admin/allUsers' ? 'active' : '' ?>">
         <a class="nav-link" href="<?= base_url('admin/allUsers'); ?>">
@@ -49,6 +55,12 @@
         <a class="nav-link" href="<?= base_url('admin/packagePurchase'); ?>">
             <i class="fas fa-globe-europe"></i>
             <span>Bonus Global</span></a>
+    </li>
+    
+    <li class="nav-item <?= uri_string() == 'admin/packageMining' ? 'active' : '' ?>">
+        <a class="nav-link" href="<?= base_url('admin/packageMining'); ?>">
+            <i class="fas fa-shopping-cart"></i>
+            <span>Package Purchase</span></a>
     </li>
 
     <!-- Nav Item - Payment History -->

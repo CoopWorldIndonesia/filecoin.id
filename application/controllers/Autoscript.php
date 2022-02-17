@@ -1502,22 +1502,25 @@ class Autoscript extends CI_Controller {
     {
         $year_month   = date('Y-m', strtotime("-1 month"));
         $date         = date('Y-m-d');
-
+        // $date         = '2022-02-01';
+        
         /**Global omset*/
         $query_omset    = $this->M_user->get_global_omset($year_month);
-        $global_omset   = $query_omset['fill'] + ($query_omset['mtm']*4) + ($query_omset['zenx']*12);
+        $global_omset   = $query_omset['fill'] + ($query_omset['mtm']/4) + ($query_omset['zenx']/12);
 
         if(!empty($global_omset))
         {
+            $dateLimit = $year_month.'-15';
+            
             /**Get amount FM LEVEL */
-            $count_fm4     = $this->M_user->row_data_byuser('level_fm', 'fm', 'FM4');
-            $count_fm5     = $this->M_user->row_data_byuser('level_fm', 'fm', 'FM5');
-            $count_fm6     = $this->M_user->row_data_byuser('level_fm', 'fm', 'FM6');
-            $count_fm7     = $this->M_user->row_data_byuser('level_fm', 'fm', 'FM7');
-            $count_fm8     = $this->M_user->row_data_byuser('level_fm', 'fm', 'FM8');
-            $count_fm9     = $this->M_user->row_data_byuser('level_fm', 'fm', 'FM9');
-            $count_fm10    = $this->M_user->row_data_byuser('level_fm', 'fm', 'FM10');
-
+            $count_fm4 = $this->M_user->count_fm_bymonth_now($dateLimit, 'FM4');
+            $count_fm5 = $this->M_user->count_fm_bymonth_now($dateLimit, 'FM5');
+            $count_fm6 = $this->M_user->count_fm_bymonth_now($dateLimit, 'FM6');
+            $count_fm7 = $this->M_user->count_fm_bymonth_now($dateLimit, 'FM7');
+            $count_fm8 = $this->M_user->count_fm_bymonth_now($dateLimit, 'FM8');
+            $count_fm9 = $this->M_user->count_fm_bymonth_now($dateLimit, 'FM9');
+            $count_fm10 = $this->M_user->count_fm_bymonth_now($dateLimit, 'FM10');
+            
             $amount_fm4  = $count_fm4+$count_fm5+$count_fm6+$count_fm7+$count_fm8+$count_fm9+$count_fm10;
             $amount_fm5  = $count_fm5+$count_fm6+$count_fm7+$count_fm8+$count_fm9+$count_fm10;
             $amount_fm6  = $count_fm6+$count_fm7+$count_fm8+$count_fm9+$count_fm10;
@@ -1525,7 +1528,8 @@ class Autoscript extends CI_Controller {
             $amount_fm8  = $count_fm8+$count_fm9+$count_fm10;
             $amount_fm9  = $count_fm9+$count_fm10;
             $amount_fm10 = $count_fm10;
-    
+            
+            
             /**Count bonus */
             if(!empty($amount_fm4))
             {
@@ -1551,23 +1555,23 @@ class Autoscript extends CI_Controller {
             {
                 $bonus_fm8  = ((($global_omset * 0.3)/100)*4)/$amount_fm8;
             }
-    
+            
             if(!empty($amount_fm9))
             {
                 $bonus_fm9  = ((($global_omset * 0.2)/100)*4)/$amount_fm9;
             }
-    
+            
             if(!empty($amount_fm10))
             {
                 $bonus_fm10 = ((($global_omset * 0.1)/100)*4)/$amount_fm10;
             }
             
-            $query_user = $this->M_user->get_user_global();
-    
+            $query_user = $this->M_user->get_user_global_limitdate($dateLimit);
+            
             foreach($query_user->result() as $row_user)
             {
                 if($row_user->fm == 'FM4')
-                {                                                                                                                                                                                                                                             
+                {                                                                                                   
                     $this->_insert_bonus_global($row_user->id, $bonus_fm4, $date, 'FM4');
                 }
                 elseif($row_user->fm == 'FM5')
@@ -1664,6 +1668,7 @@ class Autoscript extends CI_Controller {
             'generation' => '0',
             'note' => 'bonus global',
             'level_fm' => $level_excess,
+            'note_level' => $fm,
             'datecreate' => $d
         ];
 

@@ -2,7 +2,7 @@
 <div class="container-fluid">
 
     <!-- Page Heading -->
-    <h1 class="h3 mb-4 text-white my-home-title">Sponsor</h1>
+    <h1 class="h3 mb-4 text-white my-home-title">Recommended</h1>
     <div class="v-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search">
         <div class="input-group input-group-joined">
             <span class="input-group-text">

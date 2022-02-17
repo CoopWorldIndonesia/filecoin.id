@@ -25,9 +25,18 @@
                                         <?php 
                                         foreach($list_mining as $row_list){ 
                                             $dateNow        = date('Y-m-d');
-                                            $datepay        = date('Y-m-d', $row_list->datecreate);
-                                            $start_mining   = date('Y-m-d', strtotime("+1 day", strtotime($datepay)));
-                                            $all_use_mining = (strtotime($dateNow) - strtotime($start_mining)) / (60 * 60 * 24);
+                                            $datepay        = date('Y-m-d', $row_list->update_date);
+                                            $start_mining   = date('Y-m-d', strtotime("+45 day", strtotime($datepay)));
+                                            $use_mining = (strtotime($dateNow) - strtotime($start_mining)) / (60 * 60 * 24);
+
+                                            if($use_mining <= 0)
+                                            {
+                                                $all_use_mining = 0;
+                                            }
+                                            else
+                                            {
+                                                $all_use_mining = $use_mining;
+                                            }
                                         ?>
                                         
                                             <tr>
